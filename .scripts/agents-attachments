@@ -1,0 +1,381 @@
+#!/usr/bin/env python3
+
+import base64
+import hashlib
+import json
+import mimetypes
+import os
+import re
+import sys
+from pathlib import Path
+from typing import Optional, Tuple
+
+
+MANIFEST_ENV = "AGENTS_ATTACHMENTS_MANIFEST"
+DEFAULT_MANIFEST = ".temp/agents-attachments-manifest.json"
+DEFAULT_OUT_DIR_NAME = "agents-attachments"
+DATA_URL_RE = re.compile(r"^data:(?P<mime>[^;]+);base64,(?P<data>.+)$", re.DOTALL)
+IMAGE_NAME_RE = re.compile(r"<image\s+name=\[(?P<name>[^\]]+)\]>", re.IGNORECASE)
+
+
+def usage() -> int:
+    print(
+        "Usage:\n"
+        "  agents-attachments list [--manifest PATH]\n"
+        "  agents-attachments show <id-or-name> [--manifest PATH]\n"
+        "  agents-attachments path <id-or-name> [--manifest PATH]\n"
+        "  agents-attachments materialize [--thread-id ID] [--session PATH] [--out-dir DIR] [--manifest PATH]",
+        file=sys.stderr,
+    )
+    return 2
+
+
+def resolve_manifest_path(argv: list[str]) -> tuple[Path, list[str]]:
+    args = list(argv)
+    manifest = None
+    i = 0
+    while i < len(args):
+        arg = args[i]
+        if arg == "--manifest":
+            if i + 1 >= len(args):
+                raise SystemExit("--manifest requires a path")
+            manifest = args[i + 1]
+            del args[i : i + 2]
+            continue
+        if arg.startswith("--manifest="):
+            manifest = arg.split("=", 1)[1]
+            del args[i]
+            continue
+        i += 1
+
+    path = manifest or os.environ.get(MANIFEST_ENV) or DEFAULT_MANIFEST
+    return Path(path), args
+
+
+def load_attachments(path: Path) -> list[dict]:
+    if not path.exists():
+        raise SystemExit(f"manifest not found: {path}")
+
+    with path.open("r", encoding="utf-8") as fh:
+        data = json.load(fh)
+
+    if isinstance(data, list):
+        attachments = data
+    elif isinstance(data, dict):
+        attachments = data.get("attachments", [])
+    else:
+        raise SystemExit(f"unsupported manifest shape in {path}")
+
+    if not isinstance(attachments, list):
+        raise SystemExit(f"attachments field must be a list in {path}")
+
+    result = []
+    for item in attachments:
+        if isinstance(item, dict):
+            result.append(item)
+    return result
+
+
+def attachment_key(item: dict, key: str) -> str:
+    value = item.get(key, "")
+    return value if isinstance(value, str) else str(value)
+
+
+def find_attachment(attachments: list[dict], needle: str) -> dict:
+    matches = []
+    for item in attachments:
+        if attachment_key(item, "id") == needle:
+            matches.append(item)
+            continue
+        if attachment_key(item, "name") == needle:
+            matches.append(item)
+            continue
+        local_path = attachment_key(item, "local_path")
+        if local_path and Path(local_path).name == needle:
+            matches.append(item)
+
+    if not matches:
+        raise SystemExit(f"attachment not found: {needle}")
+    if len(matches) > 1:
+        raise SystemExit(f"attachment reference is ambiguous: {needle}")
+    return matches[0]
+
+
+def cmd_list(attachments: list[dict]) -> int:
+    for item in attachments:
+        print(
+            "\t".join(
+                [
+                    attachment_key(item, "id"),
+                    attachment_key(item, "name"),
+                    attachment_key(item, "mime_type"),
+                    attachment_key(item, "local_path"),
+                ]
+            )
+        )
+    return 0
+
+
+def cmd_show(attachments: list[dict], needle: str) -> int:
+    print(json.dumps(find_attachment(attachments, needle), indent=2, ensure_ascii=False))
+    return 0
+
+
+def cmd_path(attachments: list[dict], needle: str) -> int:
+    item = find_attachment(attachments, needle)
+    local_path = attachment_key(item, "local_path")
+    if not local_path:
+        raise SystemExit(f"attachment has no local_path: {needle}")
+    print(local_path)
+    return 0
+
+
+def resolve_materialize_options(args: list[str], manifest_path: Path) -> Tuple[Optional[str], Optional[Path], Path]:
+    thread_id = os.environ.get("CODEX_THREAD_ID")
+    session_path = None
+    out_dir = manifest_path.parent / DEFAULT_OUT_DIR_NAME
+    i = 0
+
+    while i < len(args):
+        arg = args[i]
+        if arg == "--thread-id":
+            if i + 1 >= len(args):
+                raise SystemExit("--thread-id requires a value")
+            thread_id = args[i + 1]
+            i += 2
+            continue
+        if arg.startswith("--thread-id="):
+            thread_id = arg.split("=", 1)[1]
+            i += 1
+            continue
+        if arg == "--session":
+            if i + 1 >= len(args):
+                raise SystemExit("--session requires a path")
+            session_path = Path(args[i + 1]).expanduser()
+            i += 2
+            continue
+        if arg.startswith("--session="):
+            session_path = Path(arg.split("=", 1)[1]).expanduser()
+            i += 1
+            continue
+        if arg == "--out-dir":
+            if i + 1 >= len(args):
+                raise SystemExit("--out-dir requires a path")
+            out_dir = Path(args[i + 1]).expanduser()
+            i += 2
+            continue
+        if arg.startswith("--out-dir="):
+            out_dir = Path(arg.split("=", 1)[1]).expanduser()
+            i += 1
+            continue
+        raise SystemExit(f"unknown option for materialize: {arg}")
+
+    return thread_id, session_path, out_dir
+
+
+def find_rollout_path(thread_id: str) -> Path:
+    sessions_root = Path.home() / ".codex" / "sessions"
+    if not sessions_root.exists():
+        raise SystemExit(f"codex sessions directory not found: {sessions_root}")
+
+    matches = sorted(
+        sessions_root.rglob(f"rollout-*{thread_id}.jsonl"),
+        key=lambda p: p.stat().st_mtime,
+        reverse=True,
+    )
+    if not matches:
+        raise SystemExit(f"no rollout file found for thread_id={thread_id}")
+    return matches[0]
+
+
+def iter_rollout_user_messages(session_path: Path):
+    with session_path.open("r", encoding="utf-8") as fh:
+        for line in fh:
+            obj = json.loads(line)
+            if obj.get("type") != "response_item":
+                continue
+            payload = obj.get("payload", {})
+            if payload.get("type") != "message" or payload.get("role") != "user":
+                continue
+            content = payload.get("content", [])
+            if isinstance(content, list):
+                yield content
+
+
+def extract_hint_name(text: str) -> Optional[str]:
+    match = IMAGE_NAME_RE.search(text)
+    if not match:
+        return None
+    return match.group("name").strip() or None
+
+
+def split_data_url(value: str) -> tuple[str, bytes]:
+    match = DATA_URL_RE.match(value)
+    if not match:
+        raise SystemExit("unsupported attachment payload: expected data URL")
+
+    mime_type = match.group("mime").strip() or "application/octet-stream"
+    raw = base64.b64decode(match.group("data"))
+    return mime_type, raw
+
+
+def guess_extension(mime_type: str) -> str:
+    if mime_type == "image/jpeg":
+        return ".jpg"
+    ext = mimetypes.guess_extension(mime_type, strict=False)
+    if ext == ".jpe":
+        return ".jpg"
+    return ext or ""
+
+
+def sanitize_name(name: str, fallback_stem: str, mime_type: str) -> str:
+    ext = guess_extension(mime_type)
+    raw = name.strip() if name else fallback_stem
+    if not Path(raw).suffix and ext:
+        raw = f"{raw}{ext}"
+
+    safe = re.sub(r"[^A-Za-z0-9._-]+", "-", raw).strip(".-")
+    if not safe:
+        safe = fallback_stem
+        if ext:
+            safe = f"{safe}{ext}"
+
+    suffix = Path(safe).suffix
+    if not suffix and ext:
+        safe = f"{safe}{ext}"
+    return safe
+
+
+def uniquify_name(name: str, seen_names: set[str]) -> str:
+    candidate = name
+    stem = Path(name).stem or "attachment"
+    suffix = Path(name).suffix
+    index = 2
+    while candidate in seen_names:
+        candidate = f"{stem}-{index}{suffix}"
+        index += 1
+    seen_names.add(candidate)
+    return candidate
+
+
+def materialize_from_codex_rollout(session_path: Path, out_dir: Path) -> list[dict]:
+    out_dir.mkdir(parents=True, exist_ok=True)
+    attachments = []
+    seen_local_names: set[str] = set()
+    seen_display_names: set[str] = set()
+    counter = 1
+
+    for content in iter_rollout_user_messages(session_path):
+        hint_name = None
+        for item in content:
+            if not isinstance(item, dict):
+                continue
+
+            item_type = item.get("type")
+            if item_type == "input_text":
+                text = item.get("text", "")
+                if isinstance(text, str):
+                    hinted = extract_hint_name(text)
+                    if hinted:
+                        hint_name = hinted
+                continue
+
+            if item_type != "input_image":
+                continue
+
+            image_url = item.get("image_url")
+            if not isinstance(image_url, str) or not image_url.startswith("data:"):
+                continue
+
+            mime_type, payload = split_data_url(image_url)
+            sha256 = hashlib.sha256(payload).hexdigest()
+            fallback_stem = f"attachment-{counter:03d}"
+            display_name = sanitize_name(hint_name or "", fallback_stem, mime_type)
+            display_name = uniquify_name(display_name, seen_display_names)
+            local_name = f"{counter:03d}-{display_name}"
+            while local_name in seen_local_names:
+                counter += 1
+                fallback_stem = f"attachment-{counter:03d}"
+                display_name = sanitize_name(hint_name or "", fallback_stem, mime_type)
+                display_name = uniquify_name(display_name, seen_display_names)
+                local_name = f"{counter:03d}-{display_name}"
+            seen_local_names.add(local_name)
+
+            local_path = out_dir / local_name
+            local_path.write_bytes(payload)
+
+            attachments.append(
+                {
+                    "id": f"attachment-{counter:03d}",
+                    "name": display_name,
+                    "mime_type": mime_type,
+                    "size_bytes": len(payload),
+                    "sha256": sha256,
+                    "local_path": str(local_path.resolve()),
+                    "source": "codex-rollout",
+                    "metadata": {
+                        "session_path": str(session_path),
+                    },
+                }
+            )
+            counter += 1
+            hint_name = None
+
+    return attachments
+
+
+def write_manifest(path: Path, attachments: list[dict], session_path: Path) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    payload = {
+        "attachments": attachments,
+        "source": "codex-rollout",
+        "session_path": str(session_path),
+    }
+    with path.open("w", encoding="utf-8") as fh:
+        json.dump(payload, fh, indent=2, ensure_ascii=False)
+        fh.write("\n")
+
+
+def cmd_materialize(manifest_path: Path, args: list[str]) -> int:
+    thread_id, session_path, out_dir = resolve_materialize_options(args, manifest_path)
+    if session_path is None:
+        if not thread_id:
+            raise SystemExit("materialize requires --thread-id, --session, or CODEX_THREAD_ID")
+        session_path = find_rollout_path(thread_id)
+
+    attachments = materialize_from_codex_rollout(session_path, out_dir)
+    if not attachments:
+        raise SystemExit(f"no input_image attachments found in {session_path}")
+
+    write_manifest(manifest_path, attachments, session_path)
+    print(str(manifest_path.resolve()))
+    return 0
+
+
+def main(argv: list[str]) -> int:
+    manifest_path, args = resolve_manifest_path(argv)
+    if not args:
+        return usage()
+
+    command = args[0]
+    if command == "materialize":
+        return cmd_materialize(manifest_path, args[1:])
+
+    attachments = load_attachments(manifest_path)
+
+    if command == "list":
+        return cmd_list(attachments)
+    if command == "show":
+        if len(args) != 2:
+            return usage()
+        return cmd_show(attachments, args[1])
+    if command == "path":
+        if len(args) != 2:
+            return usage()
+        return cmd_path(attachments, args[1])
+
+    return usage()
+
+
+if __name__ == "__main__":
+    raise SystemExit(main(sys.argv[1:]))
