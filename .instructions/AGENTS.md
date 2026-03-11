@@ -6,6 +6,7 @@ This document loads all instruction modules automatically.
 
 @~/.agents/.instructions/INSTRUCTIONS_PLATFORM.md
 @~/.agents/.instructions/INSTRUCTIONS_STRUCTURE.md
+@~/.agents/.instructions/INSTRUCTIONS_ATTACHMENTS.md
 @~/.agents/.instructions/INSTRUCTIONS_TOOLS.md
 @~/.agents/.instructions/INSTRUCTIONS_SKILLS.md
 @~/.agents/.instructions/INSTRUCTIONS_SKILL_TRIGGERS.md

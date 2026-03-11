@@ -9,14 +9,14 @@ Works with:
 ## Quick Start
 
 ```bash
-# Clone/init the repo
-cd ~/.agents
-
-# Run setup script to create symlinks
-./.scripts/setup-symlinks.sh
+# From the source repo
+cd /path/to/alexis-agents-infra
+./setup.sh
 ```
 
-The script creates symlinks from `~/.claude/` and `~/.codex/` to this repo, so all changes are tracked in one place.
+`setup.sh` syncs the repo into `~/.agents`, promotes `alexis-agents-infra` and
+`skill-creator` into the public `~/.agents/skills/` registry, then refreshes
+symlinks in `~/.claude/`, `~/.codex/`, and `~/.local/bin`.
 
 ## Structure
 
@@ -25,6 +25,7 @@ The script creates symlinks from `~/.claude/` and `~/.codex/` to this repo, so a
 ├── .instructions/          # Global instructions (modular .md files)
 │   ├── INSTRUCTIONS.md     # Entry point (loads all modules)
 │   ├── AGENTS.md           # Entry point for Codex CLI
+│   ├── INSTRUCTIONS_ATTACHMENTS.md
 │   ├── INSTRUCTIONS_PLATFORM.md
 │   ├── INSTRUCTIONS_STRUCTURE.md
 │   ├── INSTRUCTIONS_TOOLS.md
@@ -57,7 +58,8 @@ The script creates symlinks from `~/.claude/` and `~/.codex/` to this repo, so a
 │   └── xlsx/
 │
 ├── .scripts/               # Setup and utility scripts
-│   └── setup-symlinks.sh   # Main setup script
+│   ├── setup-symlinks.sh   # Internal symlink refresher used by setup.sh
+│   └── agents-attachments  # Helper for agents-attachments-manifest.json
 │
 ├── .configs/               # Tool configurations
 │   ├── claude-settings.json    # Claude Code settings (reference)
@@ -133,6 +135,25 @@ Reference config with:
 - Reasoning effort: `xhigh`
 - Trusted projects list
 
+## Attachments
+
+This repo defines a generic agent attachment contract:
+
+- manifest file name: `agents-attachments-manifest.json`
+- env var: `AGENTS_ATTACHMENTS_MANIFEST`
+- helper CLI: `agents-attachments`
+
+The repo does not itself ingest chat attachments. A separate runtime or launcher
+must materialize files locally, write the manifest, and export the env var before
+starting the agent process.
+
+For Codex sessions, the helper can bootstrap a local manifest from rollout
+history when `CODEX_THREAD_ID` is available:
+
+```bash
+agents-attachments materialize
+```
+
 ## Rules
 
 `.rules/default.rules` — pre-approved Codex CLI commands:
@@ -141,22 +162,28 @@ Reference config with:
 
 ## How It Works
 
-After running `setup-symlinks.sh`:
+After running `setup.sh`:
 
 ```
+~/.agents/
+├── skills/
+│   ├── alexis-agents-infra -> ~/.agents
+│   ├── skill-creator -> ~/.agents/.skills/skill-creator
+│   └── ...
+
 ~/.claude/
 ├── CLAUDE.md           # Points to ~/.agents/.instructions/INSTRUCTIONS.md
 ├── instructions/ -> ~/.agents/.instructions/
 └── skills/
-    ├── ios-ui-validation/ -> ~/.agents/.skills/ios-ui-validation/
-    ├── skill-creator/ -> ~/.agents/.skills/skill-creator/
+    ├── alexis-agents-infra -> ~/.agents/skills/alexis-agents-infra
+    ├── skill-creator/ -> ~/.agents/skills/skill-creator
     └── ...
 
 ~/.codex/
 ├── AGENTS.md -> ~/.agents/.instructions/AGENTS.md
 ├── config.toml -> ~/.agents/.configs/codex-config.toml
 ├── skills/
-│   └── ... -> ~/.agents/.skills/...
+│   └── ... -> ~/.agents/skills/...
 └── rules/
     └── default.rules -> ~/.agents/.rules/default.rules
 ```

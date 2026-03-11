@@ -1,15 +1,19 @@
 #!/bin/zsh
 #
 # setup-symlinks.sh
-# Creates symlinks from ~/.claude/ and ~/.codex/ to ~/.agents/
-# This makes ~/.agents/ the single source of truth for instructions, skills, configs, and rules.
+# Internal helper used by setup.sh.
+# Refreshes symlinks from ~/.claude/ and ~/.codex/ to ~/.agents/ and installs helper CLIs.
 #
 
 set -e
 
-AGENTS_DIR="$HOME/.agents"
-CLAUDE_DIR="$HOME/.claude"
-CODEX_DIR="$HOME/.codex"
+export PATH="/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:${PATH:-}"
+
+AGENTS_DIR="${AGENTS_DIR:-$HOME/.agents}"
+CLAUDE_DIR="${CLAUDE_DIR:-$HOME/.claude}"
+CODEX_DIR="${CODEX_DIR:-$HOME/.codex}"
+BIN_DIR="${BIN_DIR:-$HOME/.local/bin}"
+AGENTS_SKILLS_DIR="$AGENTS_DIR/skills"
 
 # Colors for output
 RED='\033[0;31m'
@@ -20,6 +24,18 @@ NC='\033[0m' # No Color
 log_info() { echo "${GREEN}[INFO]${NC} $1"; }
 log_warn() { echo "${YELLOW}[WARN]${NC} $1"; }
 log_error() { echo "${RED}[ERROR]${NC} $1"; }
+
+ensure_repo_skill_links() {
+    mkdir -p "$AGENTS_SKILLS_DIR"
+
+    # Promote the repo itself as a skill entry.
+    create_symlink "$AGENTS_DIR" "$AGENTS_SKILLS_DIR/alexis-agents-infra"
+
+    # Promote bundled skill-creator into the public skills registry.
+    if [ -d "$AGENTS_DIR/.skills/skill-creator" ]; then
+        create_symlink "$AGENTS_DIR/.skills/skill-creator" "$AGENTS_SKILLS_DIR/skill-creator"
+    fi
+}
 
 # Backup and remove existing file/dir, then create symlink
 create_symlink() {
@@ -65,10 +81,8 @@ Load all global instructions:
 EOF
     log_info "Updated $CLAUDE_DIR/CLAUDE.md"
 
-    # 3. Skills - create symlinks for each skill
-    #    .skills/ = bundled (tracked in git)
-    #    skills/  = external (gitignored, local repos)
-    for skill_dir in "$AGENTS_DIR/.skills"/* "$AGENTS_DIR/skills"/*; do
+    # 3. Skills - link from ~/.agents/skills/ registry
+    for skill_dir in "$AGENTS_SKILLS_DIR"/*; do
         if [ -d "$skill_dir" ] || [ -L "$skill_dir" ]; then
             skill_name=$(basename "$skill_dir")
             create_symlink "$skill_dir" "$CLAUDE_DIR/skills/$skill_name"
@@ -97,9 +111,7 @@ setup_codex() {
     create_symlink "$AGENTS_DIR/.instructions/AGENTS.md" "$CODEX_DIR/AGENTS.md"
 
     # 2. Skills - create symlinks for each skill (skip .system)
-    #    .skills/ = bundled (tracked in git)
-    #    skills/  = external (gitignored, local repos)
-    for skill_dir in "$AGENTS_DIR/.skills"/* "$AGENTS_DIR/skills"/*; do
+    for skill_dir in "$AGENTS_SKILLS_DIR"/*; do
         if [ -d "$skill_dir" ] || [ -L "$skill_dir" ]; then
             skill_name=$(basename "$skill_dir")
             # Don't overwrite system skills
@@ -126,6 +138,20 @@ setup_codex() {
 }
 
 # ============================================================================
+# Shared helper CLI setup
+# ============================================================================
+
+setup_helpers() {
+    log_info "=== Setting up shared helper CLIs ==="
+
+    mkdir -p "$BIN_DIR"
+
+    create_symlink "$AGENTS_DIR/.scripts/agents-attachments" "$BIN_DIR/agents-attachments"
+
+    log_info "=== Shared helper CLI setup complete ==="
+}
+
+# ============================================================================
 # Verification
 # ============================================================================
 
@@ -133,20 +159,24 @@ verify_setup() {
     log_info "=== Verifying setup ==="
 
     echo ""
-    echo "~/.agents/ structure:"
+    echo "$AGENTS_DIR structure:"
     ls -la "$AGENTS_DIR"
 
     echo ""
-    echo "~/.claude/ symlinks:"
+    echo "$CLAUDE_DIR symlinks:"
     ls -la "$CLAUDE_DIR/instructions" 2>/dev/null || echo "  instructions: NOT FOUND"
     ls -la "$CLAUDE_DIR/settings.json" 2>/dev/null || echo "  settings.json: NOT FOUND"
     ls -la "$CLAUDE_DIR/skills" 2>/dev/null | head -5 || echo "  skills: NOT FOUND"
 
     echo ""
-    echo "~/.codex/ symlinks:"
+    echo "$CODEX_DIR symlinks:"
     ls -la "$CODEX_DIR/AGENTS.md" 2>/dev/null || echo "  AGENTS.md: NOT FOUND"
     ls -la "$CODEX_DIR/config.toml" 2>/dev/null || echo "  config.toml: NOT FOUND"
     ls -la "$CODEX_DIR/skills" 2>/dev/null | head -5 || echo "  skills: NOT FOUND"
+
+    echo ""
+    echo "Shared helper CLIs:"
+    ls -la "$BIN_DIR/agents-attachments" 2>/dev/null || echo "  agents-attachments: NOT FOUND"
 
     log_info "=== Verification complete ==="
 }
@@ -157,7 +187,7 @@ verify_setup() {
 
 main() {
     echo ""
-    log_info "Starting ~/.agents/ symlink setup..."
+    log_info "Starting agent symlink setup from $AGENTS_DIR..."
     echo ""
 
     # Check that source exists
@@ -166,14 +196,18 @@ main() {
         exit 1
     fi
 
+    ensure_repo_skill_links
+    echo ""
     setup_claude
     echo ""
     setup_codex
     echo ""
+    setup_helpers
+    echo ""
     verify_setup
 
     echo ""
-    log_info "Done! ~/.agents/ is now the single source of truth."
+    log_info "Done! $AGENTS_DIR is now the configured source of truth."
     echo ""
 }
 
