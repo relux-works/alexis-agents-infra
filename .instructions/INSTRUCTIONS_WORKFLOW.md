@@ -14,6 +14,12 @@
 * **Never commit or stage files automatically.**
 * When work is ready to commit, stop and ask for review.
 * **Never add Co-Authored-By lines** or any AI attribution to commits.
+* When you need to work on multiple revisions, parallel fixes, or isolated experiments in the same repo, prefer **`git worktree`** over juggling branches in one checkout.
+* Place temporary worktrees under the project's **`.temp/`** directory, not next to the main checkout.
+* If the worktree is for a tracked task, place it under a task-scoped temp path using the task ID:
+  * `.temp/<TASK-ID>/worktree/`
+  * or `.temp/<TASK-ID>/<repo-name>-worktree/`
+* This keeps the main checkout stable while making task-local scratch state easy to find and clean up.
 
 ---
 
