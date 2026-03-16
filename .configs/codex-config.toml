@@ -1,5 +1,10 @@
 model = "gpt-5.4"
 model_reasoning_effort = "xhigh"
+
+[profiles.fast]
+model = "gpt-5.4"
+model_reasoning_effort = "xhigh"
+
 [projects."/Users/aagrigore1"]
 trust_level = "trusted"
 
