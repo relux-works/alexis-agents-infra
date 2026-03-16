@@ -41,7 +41,8 @@ Examples:
 agents-attachments materialize
 agents-attachments list
 agents-attachments path screenshot.png
-task-board resource add TASK-123 "$(agents-attachments path screenshot.png)" --type precondition
+mkdir -p .temp/attachments
+cp "$(agents-attachments path screenshot.png)" .temp/attachments/
 ```
 
 ## Codex bootstrap path

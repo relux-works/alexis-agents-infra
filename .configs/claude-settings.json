@@ -22,7 +22,7 @@
     "ask": [],
     "defaultMode": "acceptEdits"
   },
-  "model": "opus",
+  "model": "sonnet",
   "enabledPlugins": {
     "swift-lsp@claude-plugins-official": true,
     "clangd-lsp@claude-plugins-official": true

@@ -3,8 +3,8 @@
 ## Priority: Scope Control Over Speed
 
 * **Task tracking and scope control always come first.** Never skip creating a task "because it's small" or "just a quick fix".
-* If a board exists (`.task-board/`), **every code change must have a task on the board BEFORE implementation starts.** No exceptions for size — a one-line fix gets a task just like a multi-story epic.
-* The workflow is: **trigger → skill → board → implement → review → reopen or close.** Never jump straight to implementation because it feels faster.
+* If the repo already has an established task tracker, board, or workflow artifact, **every code change must be tracked there BEFORE implementation starts.**
+* The workflow is: **trigger → skill → task tracking → implement → review → reopen or close.** Never jump straight to implementation because it feels faster.
 * Speed is a side effect of good process, not a substitute for it. A change done fast but untracked is worse than a change done properly.
 
 ---
@@ -25,8 +25,8 @@
 
 ## Task Tracking
 
-* For projects with `project-management` skill active — use `task-board` CLI (epics, stories, tasks). Don't use `.temp/tasks.md`.
-* For projects without a board — create a task plan in `.temp/tasks.md` before starting work.
+* If the active repo or skill already defines a task system, use it. Don't create a parallel `.temp/tasks.md`.
+* If no project-native task system exists — create a task plan in `.temp/tasks.md` before starting work.
 * Track progress in the same file.
 * Update/append to the existing plan — **don't create new task files each session**.
 * Purpose: resume smoothly if the session breaks.
@@ -35,12 +35,12 @@
 
 ## Research & Knowledge Persistence
 
-* **All research must go through the board and documentation.** Never keep research only in conversation context.
-* If a board exists — store research findings in `artifacts/RESEARCH.md` inside the relevant element's directory. Link from parent element's notes.
-* If no board — store in `.temp/` with descriptive names (`research-auth-flow.md`, `analysis-performance.md`).
+* **All research must go through the repo's established task/documentation flow.** Never keep research only in conversation context.
+* If the active repo or skill defines an artifact location, store research findings there and link them from the relevant task/doc/worklog.
+* If no project-specific convention exists — store in `.temp/` with descriptive names (`research-auth-flow.md`, `analysis-performance.md`).
 * **Why:** Context windows collapse. If research lives only in the conversation, it's lost forever when the session resets. Files persist.
 * Sub-agents doing research/analysis **must** write their findings to files before finishing.
-* Reference research artifacts from task notes: `task-board progress notes TASK-XX "See artifacts/RESEARCH.md"`.
+* Reference research artifacts from the relevant task/doc/worklog so the next session can find them quickly.
 
 ---
 

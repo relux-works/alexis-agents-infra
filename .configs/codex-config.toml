@@ -1,4 +1,4 @@
-model = "gpt-5.2"
+model = "gpt-5.4"
 model_reasoning_effort = "xhigh"
 [projects."/Users/aagrigore1"]
 trust_level = "trusted"
@@ -29,4 +29,4 @@ trust_level = "untrusted"
 hide_rate_limit_model_nudge = true
 
 [notice.model_migrations]
-"gpt-5.2" = "gpt-5.2-codex"
+"gpt-5.4" = "gpt-5.4-codex"

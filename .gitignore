@@ -3,3 +3,7 @@ skills/
 
 # macOS
 .DS_Store
+
+# Local runtime scratch and backup artifacts
+.temp/
+*.bak.*

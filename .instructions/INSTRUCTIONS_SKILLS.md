@@ -21,6 +21,19 @@ Example: before extracting screenshots, check if `ios-ui-validation` skill has i
 
 ---
 
+## Editing Shared Skills & Instructions (CRITICAL)
+
+* `~/.agents/`, `~/.claude/`, and `~/.codex/` are installed runtime locations, **not** the authoring source of truth.
+* **Never edit `~/.agents` directly** when changing shared skills, global instructions, configs, or helper scripts.
+* First identify the real source repo:
+  * shared global infra/instructions/config → `alexis-agents-infra`
+  * separately versioned skill/tool → that skill's own source repo
+* If the source repo is not obvious, stop and find it before editing anything.
+* Make the change in the source repo, then sync/install it into `~/.agents` with the repo's setup/install flow.
+* Treat direct edits inside `~/.agents` as local hotfixes only when the user explicitly asks for that, and say clearly that the source repo still needs the same change.
+
+---
+
 ## Creating Skills (Our Pattern)
 
 **Always use the `agents/skills/` pattern:**

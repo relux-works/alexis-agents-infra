@@ -15,10 +15,6 @@ Automatic skill activation rules. When these topics come up — **FIRST load the
 
 | Triggers | Skill | Action |
 |----------|-------|--------|
-| epic, story, task, board, task-board, work planning, борд, доска, задачи, эпик, стори, таски, закинь, добавь задачу, заведи, создай таск, кинь в борд, накинь | `project-management` | Use `task-board` CLI. NEVER create board files manually. |
-| feature development, implementation, реализуй, запили, сделай, имплементируй, напиши фичу + board exists (.task-board/) | `project-management` | Pick tasks from board, assign agents, update statuses. |
-| spec, SPEC.md, requirements, breakdown, спека, требования, декомпозиция, разбей на задачи, декомпозируй | `project-management` | Break down spec into epics/stories/tasks via CLI. |
-| what's next, что дальше, какие задачи, статус, прогресс, status, progress, покажи борд, summary | `project-management` | Show board status via `task-board summary` or `task-board list`. |
 | architecture diagram, C4, structurizr, plantuml, sequence/component/class diagram | `architecture-diagrams` | Follow skill for patterns, folder structure, rendering. |
 | iOS UI test, screenshot validation, XCUITest, snapshot test iOS | `ios-testing-tools` | Follow skill for Page Object, accessibility IDs, screenshots. |
 | Android UI test, espresso, compose test, screenshot validation Android | `android-testing-tools` | Follow skill for test tags, Page Object, screenshots. |
@@ -29,4 +25,4 @@ Automatic skill activation rules. When these topics come up — **FIRST load the
 
 ## Workflow Details
 
-For project management workflow (board setup, phases, sub-agent orchestration, prompts, review) — follow the `project-management` skill. It covers the full cycle: spec → board → phases → sub-agents → supervision.
+For task-tracking or board-centric workflows, prefer the repo-local skill or the explicitly requested skill. Do not assume a global default board/task-management skill from infra alone.

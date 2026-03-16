@@ -20,15 +20,20 @@ triggers:
 
 # alexis-agents-infra
 
-Shared source of truth for `~/.agents`, `~/.claude`, and `~/.codex`.
+Source repo for the shared agent infrastructure that installs into `~/.agents`, `~/.claude`, and `~/.codex`.
+
+Do not edit `~/.agents` directly when changing shared instructions, configs, or skills.
+Work in the source repo, then run `agents-infra setup global` or `./setup.sh`
+to sync the installed runtime copy.
 
 Use this repo when you need to:
 
 - update global instructions in `.instructions/`
 - add or adjust shared skills in `.skills/` or `skills/`
 - change Codex or Claude configuration in `.configs/`
-- update symlink/bootstrap logic in `.scripts/setup-symlinks.sh`
-- use `setup.sh` to sync into `~/.agents` and refresh installed links
+- update the Go CLI in `tools/agents-infra/`
+- update symlink/bootstrap logic in `.scripts/setup-symlinks.sh` or `setup.sh`
+- use `agents-infra setup global|local` to sync and refresh installed links
 - maintain the generic `agents-attachments-manifest.json` contract and helper tooling
 
 ## Quick start
@@ -36,9 +41,24 @@ Use this repo when you need to:
 ```bash
 cd /path/to/alexis-agents-infra
 ./setup.sh
+
+# Canonical interface after bootstrap
+agents-infra setup global
+agents-infra setup local /path/to/project
+agents-infra doctor global
+agents-infra doctor local /path/to/project
 ```
 
 This repo is setup/configuration infrastructure, not the runtime that launches agent sessions.
+`~/.agents` is the installed destination, not the place to author shared changes.
+
+`./setup.sh` is a bootstrap wrapper: it installs or updates the `agents-infra`
+launcher in `~/.local/bin/` and then immediately runs `agents-infra setup global`.
+
+For project-local setup, install into the target repo so that:
+- `.agents/` holds the actual installed runtime contents
+- `.claude/` and `.codex/` are just thin shims/symlinks into `.agents`
+- `.local/bin/` exposes helper CLIs for that local setup, including `agents-infra`
 
 ## Attachments Contract
 

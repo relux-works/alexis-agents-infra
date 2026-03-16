@@ -1,6 +1,6 @@
-# ~/.agents/
+# alexis-agents-infra
 
-Single source of truth for AI agent configurations, instructions, skills, and rules.
+Source repo for shared AI agent configurations, instructions, skills, and rules.
 
 Works with:
 - **Claude Code** (`~/.claude/`)
@@ -9,14 +9,39 @@ Works with:
 ## Quick Start
 
 ```bash
-# From the source repo
+# Bootstrap the launcher, then immediately sync the global runtime
 cd /path/to/alexis-agents-infra
 ./setup.sh
+
+# Use the installed CLI after bootstrap
+agents-infra setup global
+agents-infra setup local /path/to/project
+agents-infra doctor global
+agents-infra doctor local /path/to/project
 ```
 
-`setup.sh` syncs the repo into `~/.agents`, promotes `alexis-agents-infra` and
-`skill-creator` into the public `~/.agents/skills/` registry, then refreshes
-symlinks in `~/.claude/`, `~/.codex/`, and `~/.local/bin`.
+`setup.sh` is a bootstrap wrapper. It installs or updates the `agents-infra`
+launcher into `~/.local/bin/` and then immediately runs `agents-infra setup global`.
+
+The canonical interface after bootstrap is:
+- `agents-infra setup global`
+- `agents-infra setup local [PATH]`
+- `agents-infra doctor global|local`
+
+Setup syncs the repo into `.agents`, promotes `alexis-agents-infra` and
+`skill-creator` into the public skills registry, then refreshes symlinks in
+`.claude/`, `.codex/`, and `.local/bin`.
+
+Author shared changes in this source repo. Do **not** edit `~/.agents/`
+directly.
+The installed `~/.agents/` copy is runtime state and should not keep git metadata.
+
+For project-local installs, use `agents-infra setup local /abs/path/to/project`.
+That creates a local runtime layout under the project root:
+- `.agents/` — the installed runtime copy; put the actual contents here
+- `.claude/` — thin Claude shim that points into `.agents`
+- `.codex/` — thin Codex shim that points into `.agents`
+- `.local/bin/` — helper CLIs for the local setup, including `agents-infra`
 
 ## Structure
 
@@ -58,12 +83,15 @@ symlinks in `~/.claude/`, `~/.codex/`, and `~/.local/bin`.
 │   └── xlsx/
 │
 ├── .scripts/               # Setup and utility scripts
-│   ├── setup-symlinks.sh   # Internal symlink refresher used by setup.sh
+│   ├── setup-symlinks.sh   # Internal compatibility wrapper over agents-infra
 │   └── agents-attachments  # Helper for agents-attachments-manifest.json
 │
 ├── .configs/               # Tool configurations
 │   ├── claude-settings.json    # Claude Code settings (reference)
 │   └── codex-config.toml       # Codex CLI config
+│
+├── tools/
+│   └── agents-infra/       # Go CLI source
 │
 └── .rules/                 # Codex CLI rules
     └── default.rules       # Pre-approved commands
@@ -126,12 +154,12 @@ skill-name/
 
 Reference config with:
 - Allowed tools (Bash, Read, Edit, Write, etc.)
-- Default model: `opus`
+- Default model: `sonnet` (currently Sonnet 4.6)
 - Enabled plugins: `swift-lsp`
 
 ### Codex CLI (`codex-config.toml`)
 
-- Model: `gpt-5.2`
+- Model: `gpt-5.4`
 - Reasoning effort: `xhigh`
 - Trusted projects list
 
@@ -162,7 +190,7 @@ agents-attachments materialize
 
 ## How It Works
 
-After running `setup.sh`:
+After running `agents-infra setup global`:
 
 ```
 ~/.agents/
@@ -188,11 +216,40 @@ After running `setup.sh`:
     └── default.rules -> ~/.agents/.rules/default.rules
 ```
 
+`~/.agents` is the installed runtime copy. It should not be used as a git checkout.
+
+Project-local install example:
+
+```
+project-root/
+├── .agents/
+│   ├── .instructions/
+│   ├── .configs/
+│   ├── .scripts/
+│   ├── .skills/
+│   └── skills/
+├── .claude/
+│   ├── CLAUDE.md
+│   └── skills/ -> .agents/skills/...
+├── .codex/
+│   ├── AGENTS.md -> .agents/.instructions/AGENTS.md
+│   ├── config.toml -> .agents/.configs/codex-config.toml
+│   └── skills/ -> .agents/skills/...
+└── .local/bin/
+    ├── agents-attachments -> .agents/.scripts/agents-attachments
+    └── agents-infra       # launcher for the Go CLI
+```
+
+In local-project mode, treat `.agents/` as the one place where the installed runtime is populated. `.claude/` and `.codex/` should stay thin wrappers around it.
+
 ## Adding New Skills
 
 1. Create skill in `.skills/<skill-name>/`
 2. Add `SKILL.md` with frontmatter
-3. Run `setup-symlinks.sh` to propagate
+3. Run `agents-infra setup global` to propagate
+
+Use `./setup.sh` only as bootstrap when the `agents-infra` launcher is missing
+or needs reinstalling.
 
 Or use the `skill-creator` skill:
 
@@ -202,15 +259,17 @@ Or use the `skill-creator` skill:
 
 ## Updating Instructions
 
-Edit files in `.instructions/`, changes apply immediately (symlinked).
+Edit files in this source repo, then run `agents-infra setup global` to sync them
+into `~/.agents` and refresh the installed runtime state.
 
 ## Git
 
 This repo is version-controlled. Commit your changes:
 
 ```bash
-cd ~/.agents
+cd /path/to/alexis-agents-infra
 git add -A
 git commit -m "Update skills/instructions"
 git push
+agents-infra setup global
 ```
