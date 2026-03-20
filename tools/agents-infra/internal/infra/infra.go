@@ -1,6 +1,7 @@
 package infra
 
 import (
+	"bufio"
 	"fmt"
 	"io"
 	"io/fs"
@@ -16,6 +17,8 @@ const (
 	ModeGlobal Mode = "global"
 	ModeLocal  Mode = "local"
 )
+
+const internalSkillsDirName = ".internal-skills"
 
 type Layout struct {
 	Mode      Mode
@@ -93,6 +96,9 @@ func Setup(opts Options) error {
 	if err := scrubInstalledGitMetadata(opts.Layout, opts.Stdout); err != nil {
 		return err
 	}
+	if err := applyLocalConfigOverrides(opts.Layout, opts.Stdout); err != nil {
+		return err
+	}
 	if err := scrubGeneratedArtifacts(opts.Layout, opts.Stdout); err != nil {
 		return err
 	}
@@ -134,6 +140,65 @@ func logf(w io.Writer, format string, args ...any) {
 		return
 	}
 	fmt.Fprintf(w, format+"\n", args...)
+}
+
+func applyLocalConfigOverrides(layout Layout, out io.Writer) error {
+	overrideDir, ok, err := localConfigOverrideDir()
+	if err != nil {
+		return err
+	}
+	if !ok {
+		return nil
+	}
+	entries, err := os.ReadDir(overrideDir)
+	if os.IsNotExist(err) {
+		return nil
+	}
+	if err != nil {
+		return fmt.Errorf("read local override dir %s: %w", overrideDir, err)
+	}
+
+	configDir := filepath.Join(layout.AgentsDir, ".configs")
+	if err := os.MkdirAll(configDir, 0o755); err != nil {
+		return fmt.Errorf("create config dir: %w", err)
+	}
+
+	applied := 0
+	for _, entry := range entries {
+		if entry.IsDir() || shouldIgnoreGeneratedEntry(entry.Name()) {
+			continue
+		}
+		src := filepath.Join(overrideDir, entry.Name())
+		dst := filepath.Join(configDir, entry.Name())
+		info, err := entry.Info()
+		if err != nil {
+			return fmt.Errorf("stat override %s: %w", src, err)
+		}
+		if err := copyFile(src, dst, info.Mode()); err != nil {
+			return fmt.Errorf("apply local config override %s: %w", src, err)
+		}
+		applied++
+		logf(out, "Applied local config override: %s -> %s", src, dst)
+	}
+	if applied == 0 {
+		logf(out, "No local config overrides found in %s", overrideDir)
+	}
+	return nil
+}
+
+func localConfigOverrideDir() (string, bool, error) {
+	if dir := os.Getenv("AGENTS_INFRA_CONFIG_DIR"); dir != "" {
+		abs, err := filepath.Abs(dir)
+		if err != nil {
+			return "", false, fmt.Errorf("resolve AGENTS_INFRA_CONFIG_DIR: %w", err)
+		}
+		return abs, true, nil
+	}
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		return "", false, fmt.Errorf("resolve home dir: %w", err)
+	}
+	return filepath.Join(homeDir, ".config", "agents-infra"), true, nil
 }
 
 func syncRepo(sourceDir, agentsDir string) error {
@@ -280,14 +345,34 @@ func ensureRepoSkillLinks(layout Layout, out io.Writer) error {
 	if err := os.MkdirAll(skillsDir, 0o755); err != nil {
 		return fmt.Errorf("create skills dir: %w", err)
 	}
+	legacyInternalSkills := filepath.Join(layout.AgentsDir, ".skills")
+	if _, err := os.Lstat(legacyInternalSkills); err == nil {
+		if err := removeManagedPath(legacyInternalSkills, out); err != nil {
+			return err
+		}
+		logf(out, "Removed legacy internal skills directory: %s", legacyInternalSkills)
+	}
+	sourceSkillCreator := filepath.Join(layout.SourceDir, internalSkillsDirName, "skill-creator")
+	installedSkillCreator := filepath.Join(layout.AgentsDir, internalSkillsDirName, "skill-creator")
+	if _, err := os.Stat(sourceSkillCreator); os.IsNotExist(err) {
+		if _, err := os.Lstat(installedSkillCreator); err == nil {
+			if err := removeManagedPath(installedSkillCreator, out); err != nil {
+				return err
+			}
+			logf(out, "Removed stale internal skill directory: %s", installedSkillCreator)
+		}
+	}
 	if err := createSymlink(layout.AgentsDir, filepath.Join(skillsDir, "alexis-agents-infra"), out); err != nil {
 		return err
 	}
-	skillCreator := filepath.Join(layout.AgentsDir, ".skills", "skill-creator")
-	if st, err := os.Stat(skillCreator); err == nil && st.IsDir() {
-		if err := createSymlink(skillCreator, filepath.Join(skillsDir, "skill-creator"), out); err != nil {
+	// Keep skill-creator internal to avoid colliding with Codex's preinstalled
+	// .system/skill-creator when both ~/.agents/skills and ~/.codex/skills are scanned.
+	publicSkillCreator := filepath.Join(skillsDir, "skill-creator")
+	if _, err := os.Lstat(publicSkillCreator); err == nil {
+		if err := removeManagedPath(publicSkillCreator, out); err != nil {
 			return err
 		}
+		logf(out, "Removed public skill-creator mirror to avoid collision with Codex system skills")
 	}
 	return nil
 }
@@ -315,6 +400,18 @@ func setupClaude(layout Layout, out io.Writer) error {
 			return err
 		}
 	}
+	skillCreator := filepath.Join(layout.AgentsDir, internalSkillsDirName, "skill-creator")
+	skillCreatorLink := filepath.Join(layout.ClaudeDir, "skills", "skill-creator")
+	if st, err := os.Stat(skillCreator); err == nil && st.IsDir() {
+		if err := createSymlink(skillCreator, skillCreatorLink, out); err != nil {
+			return err
+		}
+	} else if _, err := os.Lstat(skillCreatorLink); err == nil {
+		if err := removeManagedPath(skillCreatorLink, out); err != nil {
+			return err
+		}
+		logf(out, "Removed stale Claude skill-creator link: %s", skillCreatorLink)
+	}
 	return createSymlink(filepath.Join(layout.AgentsDir, ".configs", "claude-settings.json"), filepath.Join(layout.ClaudeDir, "settings.json"), out)
 }
 
@@ -328,23 +425,8 @@ func setupCodex(layout Layout, out io.Writer) error {
 	if err := createSymlink(filepath.Join(layout.AgentsDir, ".instructions", "AGENTS.md"), filepath.Join(layout.CodexDir, "AGENTS.md"), out); err != nil {
 		return err
 	}
-	skillsDir := filepath.Join(layout.AgentsDir, "skills")
-	entries, err := os.ReadDir(skillsDir)
-	if err != nil {
+	if err := removeCodexSkillDuplicates(layout, out); err != nil {
 		return err
-	}
-	for _, entry := range entries {
-		if shouldIgnoreGeneratedEntry(entry.Name()) {
-			continue
-		}
-		systemSkill := filepath.Join(layout.CodexDir, "skills", ".system", entry.Name())
-		if st, err := os.Stat(systemSkill); err == nil && st.IsDir() {
-			logf(out, "Skipping %s because it exists in %s", entry.Name(), systemSkill)
-			continue
-		}
-		if err := createSymlink(filepath.Join(skillsDir, entry.Name()), filepath.Join(layout.CodexDir, "skills", entry.Name()), out); err != nil {
-			return err
-		}
 	}
 	if err := createSymlink(filepath.Join(layout.AgentsDir, ".configs", "codex-config.toml"), filepath.Join(layout.CodexDir, "config.toml"), out); err != nil {
 		return err
@@ -363,6 +445,100 @@ func setupCodex(layout Layout, out io.Writer) error {
 		}
 	}
 	return nil
+}
+
+func removeCodexSkillDuplicates(layout Layout, out io.Writer) error {
+	reservedNames, err := skillNamesInDir(filepath.Join(layout.AgentsDir, "skills"))
+	if err != nil {
+		return err
+	}
+	systemNames, err := skillNamesInDir(filepath.Join(layout.CodexDir, "skills", ".system"))
+	if err != nil {
+		return err
+	}
+	for name := range systemNames {
+		reservedNames[name] = struct{}{}
+	}
+
+	codexSkillsDir := filepath.Join(layout.CodexDir, "skills")
+	entries, err := os.ReadDir(codexSkillsDir)
+	if err != nil {
+		return err
+	}
+	for _, entry := range entries {
+		if shouldIgnoreGeneratedEntry(entry.Name()) || entry.Name() == ".system" {
+			continue
+		}
+		skillPath := filepath.Join(codexSkillsDir, entry.Name())
+		skillName, ok, err := skillNameForDir(skillPath)
+		if err != nil {
+			return err
+		}
+		if !ok {
+			continue
+		}
+		if _, exists := reservedNames[skillName]; !exists {
+			continue
+		}
+		if err := removeManagedPath(skillPath, out); err != nil {
+			return err
+		}
+		logf(out, "Removed duplicate Codex skill entry: %s (name=%s)", skillPath, skillName)
+	}
+	return nil
+}
+
+func skillNamesInDir(root string) (map[string]struct{}, error) {
+	names := make(map[string]struct{})
+	entries, err := os.ReadDir(root)
+	if os.IsNotExist(err) {
+		return names, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	for _, entry := range entries {
+		if shouldIgnoreGeneratedEntry(entry.Name()) {
+			continue
+		}
+		name, ok, err := skillNameForDir(filepath.Join(root, entry.Name()))
+		if err != nil {
+			return nil, err
+		}
+		if ok {
+			names[name] = struct{}{}
+		}
+	}
+	return names, nil
+}
+
+func skillNameForDir(dir string) (string, bool, error) {
+	skillFile := filepath.Join(dir, "SKILL.md")
+	data, err := os.ReadFile(skillFile)
+	if os.IsNotExist(err) {
+		return "", false, nil
+	}
+	if err != nil {
+		return "", false, fmt.Errorf("read %s: %w", skillFile, err)
+	}
+
+	scanner := bufio.NewScanner(strings.NewReader(string(data)))
+	for scanner.Scan() {
+		line := strings.TrimSpace(scanner.Text())
+		if !strings.HasPrefix(line, "name:") {
+			continue
+		}
+		name := strings.TrimSpace(strings.TrimPrefix(line, "name:"))
+		name = strings.Trim(name, `"'`)
+		if name == "" {
+			return "", false, nil
+		}
+		return name, true, nil
+	}
+	if err := scanner.Err(); err != nil {
+		return "", false, fmt.Errorf("scan %s: %w", skillFile, err)
+	}
+	return "", false, nil
 }
 
 func setupHelpers(layout Layout, out io.Writer) error {

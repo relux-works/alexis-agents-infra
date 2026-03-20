@@ -29,8 +29,38 @@ The canonical interface after bootstrap is:
 - `agents-infra doctor global|local`
 
 Setup syncs the repo into `.agents`, promotes `alexis-agents-infra` and
-`skill-creator` into the public skills registry, then refreshes symlinks in
-`.claude/`, `.codex/`, and `.local/bin`.
+the shared runtime registry, then refreshes symlinks in `.claude/`, `.codex/`,
+and `.local/bin`.
+
+## Skills Source Of Truth
+
+Shared/custom skills use:
+
+- `~/.agents/skills/` as the single source of truth
+
+Codex-specific runtime directories use:
+
+- `~/.codex/skills/.system/` for preinstalled system skills
+- `~/.codex/skills/` only for Codex-native skills that do not already exist in `~/.agents/skills/`
+
+This avoids duplicate discovery when the runtime scans both `~/.agents/skills/`
+and `~/.codex/skills/`.
+
+Practical rule:
+
+- do install shared skills into `~/.agents/skills/`
+- do not mirror the same shared skill into `~/.codex/skills/`
+- do not publish a shared `skill-creator` under `~/.agents/skills/`, because Codex already ships `.system/skill-creator`
+
+Machine-local Codex/Claude config should live outside the shared repo:
+
+- default local override dir: `~/.config/agents-infra/`
+- supported files: `codex-config.toml`, `claude-settings.json`
+- optional override path: `AGENTS_INFRA_CONFIG_DIR=/abs/path`
+
+`agents-infra setup global` copies those local override files into the installed
+runtime under `~/.agents/.configs/` after syncing the shared repo, so machine-specific
+trust lists and preferences stay local and untracked.
 
 Author shared changes in this source repo. Do **not** edit `~/.agents/`
 directly.
@@ -61,7 +91,7 @@ That creates a local runtime layout under the project root:
 │   ├── INSTRUCTIONS_DOCS.md
 │   └── INSTRUCTIONS_STYLE.md
 │
-├── .skills/                # Skills for Claude Code & Codex CLI
+├── .internal-skills/       # Bundled/private skills kept out of public discovery
 │   ├── algorithmic-art/
 │   ├── architecture-diagrams/
 │   ├── brand-guidelines/
@@ -196,7 +226,6 @@ After running `agents-infra setup global`:
 ~/.agents/
 ├── skills/
 │   ├── alexis-agents-infra -> ~/.agents
-│   ├── skill-creator -> ~/.agents/.skills/skill-creator
 │   └── ...
 
 ~/.claude/
@@ -204,7 +233,6 @@ After running `agents-infra setup global`:
 ├── instructions/ -> ~/.agents/.instructions/
 └── skills/
     ├── alexis-agents-infra -> ~/.agents/skills/alexis-agents-infra
-    ├── skill-creator/ -> ~/.agents/skills/skill-creator
     └── ...
 
 ~/.codex/
@@ -226,7 +254,7 @@ project-root/
 │   ├── .instructions/
 │   ├── .configs/
 │   ├── .scripts/
-│   ├── .skills/
+│   ├── .internal-skills/
 │   └── skills/
 ├── .claude/
 │   ├── CLAUDE.md
@@ -244,7 +272,7 @@ In local-project mode, treat `.agents/` as the one place where the installed run
 
 ## Adding New Skills
 
-1. Create skill in `.skills/<skill-name>/`
+1. Create bundled/private skill in `.internal-skills/<skill-name>/`, or publish shared skills via `skills/`
 2. Add `SKILL.md` with frontmatter
 3. Run `agents-infra setup global` to propagate
 

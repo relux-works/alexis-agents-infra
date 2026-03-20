@@ -153,6 +153,40 @@ func TestSetupReplacesManagedPathsWithoutBackups(t *testing.T) {
 	assertNoGeneratedArtifacts(t, project)
 }
 
+func TestSetupAppliesLocalConfigOverrides(t *testing.T) {
+	source := seedSourceRepo(t)
+	project := t.TempDir()
+	layout, err := LocalLayout(source, project)
+	if err != nil {
+		t.Fatalf("LocalLayout: %v", err)
+	}
+
+	overrideDir := t.TempDir()
+	t.Setenv("AGENTS_INFRA_CONFIG_DIR", overrideDir)
+	mustWrite(t, filepath.Join(overrideDir, "codex-config.toml"), "model = \"local-override\"\n")
+	mustWrite(t, filepath.Join(overrideDir, "claude-settings.json"), "{\"override\":true}\n")
+
+	if err := Setup(Options{Layout: layout}); err != nil {
+		t.Fatalf("Setup: %v", err)
+	}
+
+	gotCodex, err := os.ReadFile(filepath.Join(project, ".agents", ".configs", "codex-config.toml"))
+	if err != nil {
+		t.Fatalf("ReadFile(codex override): %v", err)
+	}
+	if string(gotCodex) != "model = \"local-override\"\n" {
+		t.Fatalf("unexpected codex override: %q", string(gotCodex))
+	}
+
+	gotClaude, err := os.ReadFile(filepath.Join(project, ".agents", ".configs", "claude-settings.json"))
+	if err != nil {
+		t.Fatalf("ReadFile(claude override): %v", err)
+	}
+	if string(gotClaude) != "{\"override\":true}\n" {
+		t.Fatalf("unexpected claude override: %q", string(gotClaude))
+	}
+}
+
 func seedSourceRepo(t *testing.T) string {
 	t.Helper()
 	root := t.TempDir()
@@ -160,7 +194,7 @@ func seedSourceRepo(t *testing.T) string {
 	mustMkdir(t, filepath.Join(root, ".configs"))
 	mustMkdir(t, filepath.Join(root, ".rules"))
 	mustMkdir(t, filepath.Join(root, ".scripts"))
-	mustMkdir(t, filepath.Join(root, ".skills", "skill-creator"))
+	mustMkdir(t, filepath.Join(root, internalSkillsDirName, "skill-creator"))
 	mustMkdir(t, filepath.Join(root, "tools", "agents-infra"))
 	mustMkdir(t, filepath.Join(root, ".temp"))
 	mustMkdir(t, filepath.Join(root, ".git"))
@@ -171,7 +205,7 @@ func seedSourceRepo(t *testing.T) string {
 	mustWrite(t, filepath.Join(root, ".configs", "codex-config.toml"), "model = \"gpt-5.4\"")
 	mustWrite(t, filepath.Join(root, ".rules", "default.rules"), "allow")
 	mustWrite(t, filepath.Join(root, ".scripts", "agents-attachments"), "#!/bin/sh\nexit 0\n")
-	mustWrite(t, filepath.Join(root, ".skills", "skill-creator", "SKILL.md"), "creator")
+	mustWrite(t, filepath.Join(root, internalSkillsDirName, "skill-creator", "SKILL.md"), "creator")
 	mustWrite(t, filepath.Join(root, ".gitignore"), "ignored")
 	mustWrite(t, filepath.Join(root, ".temp", "junk.txt"), "junk")
 	mustWrite(t, filepath.Join(root, "tools", "agents-infra", "go.mod"), "module example\n")
