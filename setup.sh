@@ -7,6 +7,7 @@ export PATH="/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:${PATH:-}"
 SOURCE_DIR="$(cd "$(dirname "$0")" && pwd)"
 BIN_DIR="${BIN_DIR:-$HOME/.local/bin}"
 TARGET="$BIN_DIR/agents-infra"
+WITH_PDF_TOOLS=0
 
 show_usage() {
   cat <<EOF
@@ -14,11 +15,13 @@ Usage: ./setup.sh [options]
 
 Options:
   --bin-dir PATH      Install the agents-infra launcher into PATH
+  --with-pdf-tools    Install optional PDF toolchain (pandoc, weasyprint, poppler)
   --help, -h          Show this help
 
 Behavior:
   1. Install/update the agents-infra launcher
   2. Run: agents-infra setup global
+  3. Optionally install PDF tooling
 EOF
 }
 
@@ -27,6 +30,10 @@ while [[ $# -gt 0 ]]; do
     --bin-dir)
       BIN_DIR="$2"
       shift 2
+      ;;
+    --with-pdf-tools)
+      WITH_PDF_TOOLS=1
+      shift
       ;;
     --help|-h)
       show_usage
@@ -51,6 +58,10 @@ EOF
 chmod +x "$TARGET"
 
 echo "Installed agents-infra launcher: $TARGET"
+if [[ "$WITH_PDF_TOOLS" -eq 1 ]]; then
+  echo "Installing optional PDF toolchain"
+  "$SOURCE_DIR/.scripts/setup-pdf-tools.sh"
+fi
 echo "Running global setup via: $TARGET setup global"
 "$TARGET" setup global
 echo "Global setup finished."

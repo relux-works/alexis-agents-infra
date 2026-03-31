@@ -13,6 +13,9 @@ Works with:
 cd /path/to/alexis-agents-infra
 ./setup.sh
 
+# Bootstrap and also install the optional PDF toolchain
+./setup.sh --with-pdf-tools
+
 # Use the installed CLI after bootstrap
 agents-infra setup global
 agents-infra setup local /path/to/project
@@ -28,9 +31,9 @@ The canonical interface after bootstrap is:
 - `agents-infra setup local [PATH]`
 - `agents-infra doctor global|local`
 
-Setup syncs the repo into `.agents`, promotes `alexis-agents-infra` and
-`skill-creator` into the public skills registry, then refreshes symlinks in
-`.claude/`, `.codex/`, and `.local/bin`.
+Setup syncs the repo into `.agents`, treats `.skills/` as the authoritative
+source-managed skill tree, refreshes the managed links it owns inside `skills/`,
+and then refreshes symlinks in `.claude/`, `.codex/`, and `.local/bin`.
 
 Author shared changes in this source repo. Do **not** edit `~/.agents/`
 directly.
@@ -61,7 +64,7 @@ That creates a local runtime layout under the project root:
 │   ├── INSTRUCTIONS_DOCS.md
 │   └── INSTRUCTIONS_STYLE.md
 │
-├── .skills/                # Skills for Claude Code & Codex CLI
+├── .skills/                # Source-managed shared skills versioned in this repo
 │   ├── algorithmic-art/
 │   ├── architecture-diagrams/
 │   ├── brand-guidelines/
@@ -81,6 +84,8 @@ That creates a local runtime layout under the project root:
 │   ├── web-search/
 │   ├── webapp-testing/
 │   └── xlsx/
+│
+├── skills/                 # External skills/tooling area in installed runtime; not versioned by this repo
 │
 ├── .scripts/               # Setup and utility scripts
 │   ├── setup-symlinks.sh   # Internal compatibility wrapper over agents-infra
@@ -135,7 +140,7 @@ skill-name/
 | `skill-creator` | Scaffold new skills |
 | `architecture-diagrams` | C4/PlantUML diagrams |
 | `frontend-design` | Production-grade frontend interfaces |
-| `docx` / `pdf` / `pptx` / `xlsx` | Office document manipulation |
+| `pdf` | Markdown/HTML to PDF rendering with shared themes |
 | `webapp-testing` | Playwright-based web testing |
 | `mcp-builder` | Build MCP servers |
 | `web-search` | Web search integration |
@@ -147,6 +152,50 @@ skill-name/
 | `slack-gif-creator` | Animated GIFs for Slack |
 | `doc-coauthoring` | Documentation co-authoring workflow |
 | `web-artifacts-builder` | Multi-component HTML artifacts |
+
+## Optional PDF Toolchain
+
+Install the PDF renderer stack with:
+
+```bash
+./setup.sh --with-pdf-tools
+```
+
+Or without rerunning the whole bootstrap:
+
+```bash
+./.scripts/setup-pdf-tools.sh
+./.scripts/setup-pdf-tools.sh --check
+```
+
+Managed dependencies:
+
+- `pandoc`
+- `weasyprint`
+- `poppler` (`pdftotext`, `pdfinfo`)
+
+The shared PDF skill lives at `.skills/pdf/` and includes:
+
+- `scripts/render-pdf.sh`
+- `assets/template.html5`
+- `assets/themes/prose-classic.css`
+- `assets/themes/report-clean.css`
+
+Example:
+
+```bash
+./.skills/pdf/scripts/render-pdf.sh notes/report.md \
+  -o .temp/report.pdf \
+  --theme prose-classic \
+  --title "Research Report"
+```
+
+Quick preflight and discovery:
+
+```bash
+./.scripts/setup-pdf-tools.sh --check
+./.skills/pdf/scripts/render-pdf.sh --list-themes
+```
 
 ## Configs
 
@@ -218,6 +267,10 @@ After running `agents-infra setup global`:
 
 `~/.agents` is the installed runtime copy. It should not be used as a git checkout.
 
+Meaning of the two skill trees:
+- `.skills/` is the authoritative skill content that belongs to this repo, lives under its version control, and is synced into the installed runtime.
+- `skills/` is the external runtime area for public skills and tooling. It may contain content that does not belong to `alexis-agents-infra`. `setup` only refreshes the managed links it owns there and must not treat that directory as repo-owned content.
+
 Project-local install example:
 
 ```
@@ -247,6 +300,7 @@ In local-project mode, treat `.agents/` as the one place where the installed run
 1. Create skill in `.skills/<skill-name>/`
 2. Add `SKILL.md` with frontmatter
 3. Run `agents-infra setup global` to propagate
+4. `setup` will refresh the managed link in the installed external `skills/` area without replacing unrelated external skills
 
 Use `./setup.sh` only as bootstrap when the `agents-infra` launcher is missing
 or needs reinstalling.
