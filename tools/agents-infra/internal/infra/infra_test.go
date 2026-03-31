@@ -39,8 +39,11 @@ func TestSetupLocalCreatesInstalledRuntime(t *testing.T) {
 
 	assertExists(t, filepath.Join(project, ".agents", ".instructions", "INSTRUCTIONS.md"))
 	assertNoPath(t, filepath.Join(project, ".agents", ".git"))
+	assertSymlink(t, filepath.Join(project, ".agents", "skills", "pdf"), filepath.Join(project, ".agents", ".skills", "pdf"))
 	assertSymlink(t, filepath.Join(project, ".claude", "instructions"), filepath.Join(project, ".agents", ".instructions"))
+	assertSymlink(t, filepath.Join(project, ".claude", "skills", "pdf"), filepath.Join(project, ".agents", "skills", "pdf"))
 	assertSymlink(t, filepath.Join(project, ".codex", "AGENTS.md"), filepath.Join(project, ".agents", ".instructions", "AGENTS.md"))
+	assertSymlink(t, filepath.Join(project, ".codex", "skills", "pdf"), filepath.Join(project, ".agents", "skills", "pdf"))
 	assertSymlink(t, filepath.Join(project, ".local", "bin", "agents-attachments"), filepath.Join(project, ".agents", ".scripts", "agents-attachments"))
 
 	launcher := filepath.Join(project, ".local", "bin", "agents-infra")
@@ -77,6 +80,29 @@ func TestSyncSkipsGitAndTemp(t *testing.T) {
 	assertNoPath(t, filepath.Join(project, ".agents", ".git"))
 	assertNoPath(t, filepath.Join(project, ".agents", ".temp"))
 	assertNoPath(t, filepath.Join(project, ".agents", ".gitignore"))
+}
+
+func TestSyncSkipsNestedGitMetadata(t *testing.T) {
+	source := seedSourceRepo(t)
+	mustMkdir(t, filepath.Join(source, ".skills", "pdf", ".git"))
+	mustWrite(t, filepath.Join(source, ".skills", "pdf", ".git", "config"), "nested")
+	mustWrite(t, filepath.Join(source, ".skills", "pdf", ".gitignore"), "nested-ignore")
+	mustMkdir(t, filepath.Join(source, ".skills", "pdf", "examples", ".git"))
+	mustWrite(t, filepath.Join(source, ".skills", "pdf", "examples", ".git", "HEAD"), "ref: refs/heads/main")
+
+	project := t.TempDir()
+	layout, err := LocalLayout(source, project)
+	if err != nil {
+		t.Fatalf("LocalLayout: %v", err)
+	}
+
+	if err := Setup(Options{Layout: layout}); err != nil {
+		t.Fatalf("Setup: %v", err)
+	}
+
+	assertNoPath(t, filepath.Join(project, ".agents", ".skills", "pdf", ".git"))
+	assertNoPath(t, filepath.Join(project, ".agents", ".skills", "pdf", ".gitignore"))
+	assertNoPath(t, filepath.Join(project, ".agents", ".skills", "pdf", "examples", ".git"))
 }
 
 func TestDoctor(t *testing.T) {
@@ -153,6 +179,48 @@ func TestSetupReplacesManagedPathsWithoutBackups(t *testing.T) {
 	assertNoGeneratedArtifacts(t, project)
 }
 
+func TestSetupPreservesExistingPublicSkillsRegistryEntries(t *testing.T) {
+	source := seedSourceRepo(t)
+	project := t.TempDir()
+	layout, err := LocalLayout(source, project)
+	if err != nil {
+		t.Fatalf("LocalLayout: %v", err)
+	}
+
+	mustMkdir(t, filepath.Join(project, ".agents", "skills", "public-skill"))
+	mustWrite(t, filepath.Join(project, ".agents", "skills", "public-skill", "SKILL.md"), "public")
+
+	if err := Setup(Options{Layout: layout}); err != nil {
+		t.Fatalf("Setup: %v", err)
+	}
+
+	assertExists(t, filepath.Join(project, ".agents", "skills", "public-skill", "SKILL.md"))
+	assertSymlink(t, filepath.Join(project, ".agents", "skills", "pdf"), filepath.Join(project, ".agents", ".skills", "pdf"))
+}
+
+func TestSetupScrubsStaleNestedGitMetadataFromInstalledRuntime(t *testing.T) {
+	source := seedSourceRepo(t)
+	project := t.TempDir()
+	layout, err := LocalLayout(source, project)
+	if err != nil {
+		t.Fatalf("LocalLayout: %v", err)
+	}
+
+	mustMkdir(t, filepath.Join(project, ".agents", ".skills", "pdf", ".git"))
+	mustWrite(t, filepath.Join(project, ".agents", ".skills", "pdf", ".git", "config"), "stale")
+	mustWrite(t, filepath.Join(project, ".agents", ".skills", "pdf", ".gitignore"), "stale-ignore")
+	mustMkdir(t, filepath.Join(project, ".agents", ".skills", "pdf", "vendor", ".git"))
+	mustWrite(t, filepath.Join(project, ".agents", ".skills", "pdf", "vendor", ".git", "HEAD"), "stale-head")
+
+	if err := Setup(Options{Layout: layout}); err != nil {
+		t.Fatalf("Setup: %v", err)
+	}
+
+	assertNoPath(t, filepath.Join(project, ".agents", ".skills", "pdf", ".git"))
+	assertNoPath(t, filepath.Join(project, ".agents", ".skills", "pdf", ".gitignore"))
+	assertNoPath(t, filepath.Join(project, ".agents", ".skills", "pdf", "vendor", ".git"))
+}
+
 func seedSourceRepo(t *testing.T) string {
 	t.Helper()
 	root := t.TempDir()
@@ -161,6 +229,7 @@ func seedSourceRepo(t *testing.T) string {
 	mustMkdir(t, filepath.Join(root, ".rules"))
 	mustMkdir(t, filepath.Join(root, ".scripts"))
 	mustMkdir(t, filepath.Join(root, ".skills", "skill-creator"))
+	mustMkdir(t, filepath.Join(root, ".skills", "pdf"))
 	mustMkdir(t, filepath.Join(root, "tools", "agents-infra"))
 	mustMkdir(t, filepath.Join(root, ".temp"))
 	mustMkdir(t, filepath.Join(root, ".git"))
@@ -172,6 +241,7 @@ func seedSourceRepo(t *testing.T) string {
 	mustWrite(t, filepath.Join(root, ".rules", "default.rules"), "allow")
 	mustWrite(t, filepath.Join(root, ".scripts", "agents-attachments"), "#!/bin/sh\nexit 0\n")
 	mustWrite(t, filepath.Join(root, ".skills", "skill-creator", "SKILL.md"), "creator")
+	mustWrite(t, filepath.Join(root, ".skills", "pdf", "SKILL.md"), "pdf")
 	mustWrite(t, filepath.Join(root, ".gitignore"), "ignored")
 	mustWrite(t, filepath.Join(root, ".temp", "junk.txt"), "junk")
 	mustWrite(t, filepath.Join(root, "tools", "agents-infra", "go.mod"), "module example\n")

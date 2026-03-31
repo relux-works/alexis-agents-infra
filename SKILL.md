@@ -29,7 +29,7 @@ to sync the installed runtime copy.
 Use this repo when you need to:
 
 - update global instructions in `.instructions/`
-- add or adjust shared skills in `.skills/` or `skills/`
+- add or adjust shared skills in `.skills/`
 - change Codex or Claude configuration in `.configs/`
 - update the Go CLI in `tools/agents-infra/`
 - update symlink/bootstrap logic in `.scripts/setup-symlinks.sh` or `setup.sh`
@@ -89,7 +89,8 @@ This repo's responsibilities:
 - `.configs/` — Codex/Claude config files
 - `.rules/` — Codex rules
 - `.scripts/` — setup and helper tooling
-- `.skills/`, `skills/` — installable skills
+- `.skills/` — source-managed shared skills versioned in this repo
+- `skills/` — external skills/tooling area in installed runtimes; not versioned by this repo
 
 ## References
 

@@ -187,7 +187,9 @@ func shouldSkip(rel string, isDir bool) bool {
 	rel = filepath.ToSlash(rel)
 	base := filepath.Base(rel)
 	switch {
-	case rel == ".git" || strings.HasPrefix(rel, ".git/"):
+	case hasPathComponent(rel, ".git"):
+		return true
+	case rel == "skills" || strings.HasPrefix(rel, "skills/"):
 		return true
 	case rel == ".temp" || strings.HasPrefix(rel, ".temp/"):
 		return true
@@ -203,21 +205,55 @@ func scrubInstalledGitMetadata(layout Layout, out io.Writer) error {
 		logf(out, "Skipping git metadata cleanup because source dir equals install dir: %s", layout.AgentsDir)
 		return nil
 	}
-	removed := 0
-	for _, rel := range []string{".git", ".gitignore", ".gitattributes", ".gitmodules"} {
-		path := filepath.Join(layout.AgentsDir, rel)
-		if _, err := os.Lstat(path); err == nil {
-			if err := os.RemoveAll(path); err != nil {
-				return fmt.Errorf("remove %s: %w", path, err)
-			}
-			removed++
-			logf(out, "Removed installed git metadata: %s", path)
-		}
+	paths, err := findGitMetadataPaths(layout.AgentsDir)
+	if err != nil {
+		return err
 	}
-	if removed == 0 {
+	for _, path := range paths {
+		if err := os.RemoveAll(path); err != nil {
+			return fmt.Errorf("remove %s: %w", path, err)
+		}
+		logf(out, "Removed installed git metadata: %s", path)
+	}
+	if len(paths) == 0 {
 		logf(out, "Installed git metadata already absent from %s", layout.AgentsDir)
 	}
 	return nil
+}
+
+func findGitMetadataPaths(root string) ([]string, error) {
+	var paths []string
+	err := filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if path == root {
+			return nil
+		}
+		base := filepath.Base(path)
+		switch base {
+		case ".git", ".gitignore", ".gitattributes", ".gitmodules":
+			paths = append(paths, path)
+			if d.IsDir() {
+				return filepath.SkipDir
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, fmt.Errorf("walk git metadata in %s: %w", root, err)
+	}
+	sort.Strings(paths)
+	return paths, nil
+}
+
+func hasPathComponent(rel, want string) bool {
+	for _, part := range strings.Split(rel, "/") {
+		if part == want {
+			return true
+		}
+	}
+	return false
 }
 
 func scrubGeneratedArtifacts(layout Layout, out io.Writer) error {
@@ -283,9 +319,21 @@ func ensureRepoSkillLinks(layout Layout, out io.Writer) error {
 	if err := createSymlink(layout.AgentsDir, filepath.Join(skillsDir, "alexis-agents-infra"), out); err != nil {
 		return err
 	}
-	skillCreator := filepath.Join(layout.AgentsDir, ".skills", "skill-creator")
-	if st, err := os.Stat(skillCreator); err == nil && st.IsDir() {
-		if err := createSymlink(skillCreator, filepath.Join(skillsDir, "skill-creator"), out); err != nil {
+	hiddenSkillsDir := filepath.Join(layout.AgentsDir, ".skills")
+	entries, err := os.ReadDir(hiddenSkillsDir)
+	if os.IsNotExist(err) {
+		return nil
+	}
+	if err != nil {
+		return fmt.Errorf("read hidden skills dir: %w", err)
+	}
+	for _, entry := range entries {
+		if !entry.IsDir() || shouldIgnoreGeneratedEntry(entry.Name()) {
+			continue
+		}
+		target := filepath.Join(hiddenSkillsDir, entry.Name())
+		link := filepath.Join(skillsDir, entry.Name())
+		if err := createSymlink(target, link, out); err != nil {
 			return err
 		}
 	}
