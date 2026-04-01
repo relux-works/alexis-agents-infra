@@ -77,3 +77,47 @@ For dual modes:
 - `description` becomes bilingual in the selected order
 - `triggers` become an ordered, deduplicated union in the selected order
 - `display_name`, `short_description`, and `default_prompt` use the primary locale
+
+## Adding Localization To A Skill
+
+To make a standalone skill compatible with localized installs through this
+helper:
+
+1. Keep the source repo in a stable base language, typically English, with a
+   normal `SKILL.md` and `agents/openai.yaml`.
+2. Add `locales/metadata.json` and define both `en` and `ru` entries with the
+   required keys from the localization contract.
+3. Put locale-specific trigger phrases into each locale's `triggers` list. The
+   helper will render the selected locale for single-language installs and will
+   build an ordered deduplicated trigger union for `en-ru` and `ru-en`.
+4. Install with `./scripts/setup.sh global --locale <mode>` or
+   `./scripts/setup.sh local /path/to/repo --locale <mode>` and verify the
+   rendered installed copy, not the source checkout.
+
+Minimal example:
+
+```json
+{
+  "locales": {
+    "en": {
+      "description": "English description",
+      "display_name": "skill-example",
+      "short_description": "Short English summary",
+      "default_prompt": "Use $skill-example in English.",
+      "local_prefix": "[local] ",
+      "triggers": ["example skill", "english trigger"]
+    },
+    "ru": {
+      "description": "Русское описание",
+      "display_name": "skill-example",
+      "short_description": "Короткое русское описание",
+      "default_prompt": "Используй $skill-example по-русски.",
+      "local_prefix": "[локально] ",
+      "triggers": ["пример скилла", "русский триггер"]
+    }
+  }
+}
+```
+
+The shared helper owns the install-time behavior. Skill repos only provide the
+localized metadata catalog.
