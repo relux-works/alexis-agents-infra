@@ -148,6 +148,54 @@ skill-name/
 | `doc-coauthoring` | Documentation co-authoring workflow |
 | `web-artifacts-builder` | Multi-component HTML artifacts |
 
+## Standalone Skill Install Pattern
+
+For standalone skill repos outside this repo, keep the skill source in its own
+repository and vendor the install helper from:
+
+```text
+.scripts/standalone-skill-install/
+```
+
+This exists so standalone skill repos can be installed directly from their own
+checkout while still producing the same baseline wiring as
+`alexis-agents-infra`.
+
+Minimal skill-repo layout:
+
+```text
+skill-repo/
+├── setup.sh
+├── scripts/
+│   ├── setup_main.py
+│   └── setup_support.py
+├── SKILL.md
+├── agents/openai.yaml
+└── locales/metadata.json
+```
+
+Minimal `setup.sh` wrapper:
+
+```sh
+#!/usr/bin/env sh
+set -eu
+exec python3 "$(dirname "$0")/scripts/setup_main.py" "$@"
+```
+
+Usage:
+
+- `./setup.sh global --locale <mode>`
+- `./setup.sh local /path/to/repo --locale <mode>`
+
+Result:
+
+- global installs register skill triggers in the shared global instructions
+- local installs provision `.agents/.instructions/INSTRUCTIONS_TESTING.md`
+- local installs ensure the repo-root `AGENTS.md` contains
+  `@.agents/.instructions/INSTRUCTIONS_TESTING.md` in `Modules`
+- installs use managed runtime copies instead of linking tools directly to the
+  source checkout
+
 ## Configs
 
 ### Claude Code (`claude-settings.json`)

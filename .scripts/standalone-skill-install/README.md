@@ -19,6 +19,27 @@ but still need a consistent installation contract:
 - `setup_support.py` — canonical helper library
 - `setup_main.py` — generic CLI entrypoint used by vendored copies
 
+## Minimal Skill Repo Layout
+
+```text
+skill-repo/
+├── setup.sh
+├── scripts/
+│   ├── setup_main.py
+│   └── setup_support.py
+├── SKILL.md
+├── agents/openai.yaml
+└── locales/metadata.json
+```
+
+Minimal `setup.sh` wrapper:
+
+```sh
+#!/usr/bin/env sh
+set -eu
+exec python3 "$(dirname "$0")/scripts/setup_main.py" "$@"
+```
+
 ## Vendoring Rules
 
 - Standalone skill repos should vendor these files into their own `scripts/`
@@ -26,6 +47,18 @@ but still need a consistent installation contract:
 - Do not create a runtime dependency on this repo from standalone skills.
 - When the canonical helper changes, update vendored copies in downstream skill
   repos deliberately.
+
+## Usage
+
+- `./setup.sh global --locale <mode>`
+- `./setup.sh local /path/to/repo --locale <mode>`
+
+After install:
+
+- global mode registers skill triggers in the shared global instructions
+- local mode writes `.agents/.instructions/INSTRUCTIONS_TESTING.md`
+- local mode updates the repo-root `AGENTS.md` so `Modules` includes
+  `@.agents/.instructions/INSTRUCTIONS_TESTING.md`
 
 ## Localization Contract
 
