@@ -165,8 +165,8 @@ Minimal skill-repo layout:
 
 ```text
 skill-repo/
-├── setup.sh
 ├── scripts/
+│   ├── setup.sh
 │   ├── setup_main.py
 │   └── setup_support.py
 ├── SKILL.md
@@ -174,18 +174,12 @@ skill-repo/
 └── locales/metadata.json
 ```
 
-Minimal `setup.sh` wrapper:
-
-```sh
-#!/usr/bin/env sh
-set -eu
-exec python3 "$(dirname "$0")/scripts/setup_main.py" "$@"
-```
-
 Usage:
 
-- `./setup.sh global --locale <mode>`
-- `./setup.sh local /path/to/repo --locale <mode>`
+- copy the full `.scripts/standalone-skill-install/` directory into the skill
+  repo's `scripts/` directory
+- run `./scripts/setup.sh global --locale <mode>`
+- run `./scripts/setup.sh local /path/to/repo --locale <mode>`
 
 Result:
 

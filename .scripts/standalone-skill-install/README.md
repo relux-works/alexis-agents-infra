@@ -16,6 +16,7 @@ but still need a consistent installation contract:
 
 ## Files
 
+- `setup.sh` — thin shell wrapper for the canonical Python entrypoint
 - `setup_support.py` — canonical helper library
 - `setup_main.py` — generic CLI entrypoint used by vendored copies
 
@@ -25,6 +26,7 @@ but still need a consistent installation contract:
 skill-repo/
 ├── setup.sh
 ├── scripts/
+│   ├── setup.sh
 │   ├── setup_main.py
 │   └── setup_support.py
 ├── SKILL.md
@@ -32,26 +34,18 @@ skill-repo/
 └── locales/metadata.json
 ```
 
-Minimal `setup.sh` wrapper:
-
-```sh
-#!/usr/bin/env sh
-set -eu
-exec python3 "$(dirname "$0")/scripts/setup_main.py" "$@"
-```
-
 ## Vendoring Rules
 
-- Standalone skill repos should vendor these files into their own `scripts/`
-  directory.
+- Standalone skill repos should vendor the full contents of this directory into
+  their own `scripts/` directory.
 - Do not create a runtime dependency on this repo from standalone skills.
 - When the canonical helper changes, update vendored copies in downstream skill
   repos deliberately.
 
 ## Usage
 
-- `./setup.sh global --locale <mode>`
-- `./setup.sh local /path/to/repo --locale <mode>`
+- `./scripts/setup.sh global --locale <mode>`
+- `./scripts/setup.sh local /path/to/repo --locale <mode>`
 
 After install:
 
