@@ -62,6 +62,16 @@ ln -s ../../agents/skills/my-skill .codex/skills/my-skill
 
 For global skills, create in `~/agents/skills/` and symlink to `~/.claude/skills/` and `~/.codex/skills/`.
 
+If a standalone skill repo needs an install flow with localized installed
+metadata, use the canonical vendorable helper from:
+
+```text
+alexis-agents-infra/.scripts/standalone-skill-install/
+```
+
+Vendor that helper into the standalone skill repo. Do not create a runtime
+dependency on `alexis-agents-infra`.
+
 ---
 
 ## Skill Structure & Rules
@@ -85,6 +95,8 @@ skill-name/
 * Keep `SKILL.md` under 500 lines; split into references if needed.
 * Test any included scripts before committing.
 * Document skill purpose, triggers, and usage clearly in `description` field.
+* Prefer explicit `triggers:` in `SKILL.md` frontmatter for natural-language activation.
+* If install-time localization is used, localize both `description` and `triggers`.
 
 #### Evolving skills with tooling
 

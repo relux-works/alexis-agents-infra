@@ -84,7 +84,11 @@ That creates a local runtime layout under the project root:
 │
 ├── .scripts/               # Setup and utility scripts
 │   ├── setup-symlinks.sh   # Internal compatibility wrapper over agents-infra
-│   └── agents-attachments  # Helper for agents-attachments-manifest.json
+│   ├── agents-attachments  # Helper for agents-attachments-manifest.json
+│   └── standalone-skill-install/
+│       ├── setup_main.py
+│       ├── setup_support.py
+│       └── README.md
 │
 ├── .configs/               # Tool configurations
 │   ├── claude-settings.json    # Claude Code settings (reference)
@@ -150,8 +154,8 @@ skill-name/
 
 ## Standalone Skill Install Pattern
 
-For standalone skill repos outside this repo, keep the skill source in its own
-repository and vendor the install helper from:
+For standalone skill repos outside this repo, keep the source repo separate and
+vendor the canonical install helper from:
 
 ```text
 .scripts/standalone-skill-install/
@@ -189,6 +193,16 @@ Result:
   `@.agents/.instructions/INSTRUCTIONS_TESTING.md` in `Modules`
 - installs use managed runtime copies instead of linking tools directly to the
   source checkout
+
+That helper standardizes:
+
+- `setup.sh global|local --locale <mode>`
+- managed runtime copies instead of symlinking directly to the source checkout
+- install-time localization for `SKILL.md` and `agents/openai.yaml`
+- `.skill-install.json` manifests for reruns
+
+Standalone skills should vendor the helper files into their own `scripts/`
+directory. Do not make standalone skills depend on this repo at runtime.
 
 ## Configs
 
