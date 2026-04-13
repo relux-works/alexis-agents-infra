@@ -13,6 +13,9 @@ Works with:
 cd /path/to/alexis-agents-infra
 ./setup.sh
 
+# Windows bootstrap
+.\setup.ps1
+
 # Bootstrap and also install the optional PDF toolchain
 ./setup.sh --with-pdf-tools
 
@@ -21,15 +24,24 @@ agents-infra setup global
 agents-infra setup local /path/to/project
 agents-infra doctor global
 agents-infra doctor local /path/to/project
+agents-infra version
 ```
 
-`setup.sh` is a bootstrap wrapper. It installs or updates the `agents-infra`
-launcher into `~/.local/bin/` and then immediately runs `agents-infra setup global`.
+`setup.sh` and `setup.ps1` are bootstrap wrappers. They delegate into
+`scripts/setup.sh` and `scripts/setup.ps1`, build a real `agents-infra` binary
+with version metadata, install it into the user-local bin directory, write
+install-state metadata, and then immediately run `agents-infra setup global`.
+
+Install-state metadata lives under the standard user config directory:
+
+- macOS: `~/Library/Application Support/agents-infra/install.json`
+- Windows: `%AppData%\agents-infra\install.json`
 
 The canonical interface after bootstrap is:
 - `agents-infra setup global`
 - `agents-infra setup local [PATH]`
 - `agents-infra doctor global|local`
+- `agents-infra version`
 
 Setup syncs the repo into `.agents`, treats `.skills/` as the authoritative
 source-managed skill tree, refreshes the managed links it owns inside `skills/`,
@@ -86,6 +98,10 @@ That creates a local runtime layout under the project root:
 │   └── xlsx/
 │
 ├── skills/                 # External skills/tooling area in installed runtime; not versioned by this repo
+│
+├── scripts/                # Cross-platform bootstrap entrypoints
+│   ├── setup.sh
+│   └── setup.ps1
 │
 ├── .scripts/               # Setup and utility scripts
 │   ├── setup-symlinks.sh   # Internal compatibility wrapper over agents-infra
@@ -303,7 +319,7 @@ In local-project mode, treat `.agents/` as the one place where the installed run
 4. `setup` will refresh the managed link in the installed external `skills/` area without replacing unrelated external skills
 
 Use `./setup.sh` only as bootstrap when the `agents-infra` launcher is missing
-or needs reinstalling.
+or needs reinstalling. On Windows, use `.\setup.ps1` for the same bootstrap flow.
 
 Or use the `skill-creator` skill:
 

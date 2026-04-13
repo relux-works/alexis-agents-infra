@@ -32,7 +32,7 @@ Use this repo when you need to:
 - add or adjust shared skills in `.skills/`
 - change Codex or Claude configuration in `.configs/`
 - update the Go CLI in `tools/agents-infra/`
-- update symlink/bootstrap logic in `.scripts/setup-symlinks.sh` or `setup.sh`
+- update symlink/bootstrap logic in `.scripts/setup-symlinks.sh`, `scripts/setup.sh`, `scripts/setup.ps1`, or `setup.sh`
 - use `agents-infra setup global|local` to sync and refresh installed links
 - maintain the generic `agents-attachments-manifest.json` contract and helper tooling
 
@@ -41,19 +41,23 @@ Use this repo when you need to:
 ```bash
 cd /path/to/alexis-agents-infra
 ./setup.sh
+.\\setup.ps1
 
 # Canonical interface after bootstrap
 agents-infra setup global
 agents-infra setup local /path/to/project
 agents-infra doctor global
 agents-infra doctor local /path/to/project
+agents-infra version
 ```
 
 This repo is setup/configuration infrastructure, not the runtime that launches agent sessions.
 `~/.agents` is the installed destination, not the place to author shared changes.
 
-`./setup.sh` is a bootstrap wrapper: it installs or updates the `agents-infra`
-launcher in `~/.local/bin/` and then immediately runs `agents-infra setup global`.
+`./setup.sh` and `.\setup.ps1` are bootstrap wrappers: they delegate into the
+cross-platform scripts under `scripts/`, build the `agents-infra` binary with
+embedded version metadata, install it into the user-local bin dir, write
+install-state metadata, and then immediately run `agents-infra setup global`.
 
 For project-local setup, install into the target repo so that:
 - `.agents/` holds the actual installed runtime contents
