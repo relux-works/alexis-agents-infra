@@ -24,6 +24,22 @@ func TestLocalLayout(t *testing.T) {
 	}
 }
 
+func TestCLIWrapperNameForWindows(t *testing.T) {
+	if got := cliWrapperName("windows"); got != "agents-infra.cmd" {
+		t.Fatalf("cliWrapperName(windows) = %q", got)
+	}
+}
+
+func TestCLIWrapperBodyForWindows(t *testing.T) {
+	body := cliWrapperBody("windows", `C:\src\alexis-agents-infra`)
+	if !strings.Contains(body, "AGENTS_INFRA_SOURCE_DIR=C:\\src\\alexis-agents-infra") {
+		t.Fatalf("windows wrapper body missing source dir: %q", body)
+	}
+	if !strings.Contains(body, "go run . %*") {
+		t.Fatalf("windows wrapper body missing go run invocation: %q", body)
+	}
+}
+
 func TestSetupLocalCreatesInstalledRuntime(t *testing.T) {
 	source := seedSourceRepo(t)
 	project := t.TempDir()
@@ -120,6 +136,22 @@ func TestDoctor(t *testing.T) {
 	if !report.AgentsGitFree || !report.ClaudeLinked || !report.CodexLinked || !report.HelpersLinked || !report.InfraSkillLink {
 		t.Fatalf("unexpected doctor report: %+v", report)
 	}
+}
+
+func TestSetupGlobalDoesNotInstallCLIWrapper(t *testing.T) {
+	source := seedSourceRepo(t)
+	home := t.TempDir()
+	layout, err := GlobalLayout(source, home)
+	if err != nil {
+		t.Fatalf("GlobalLayout: %v", err)
+	}
+
+	if err := Setup(Options{Layout: layout}); err != nil {
+		t.Fatalf("Setup: %v", err)
+	}
+
+	assertNoPath(t, filepath.Join(home, ".local", "bin", "agents-infra"))
+	assertNoPath(t, filepath.Join(home, ".local", "bin", "agents-infra.cmd"))
 }
 
 func TestSetupRemovesGeneratedArtifacts(t *testing.T) {

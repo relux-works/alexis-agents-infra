@@ -10,6 +10,12 @@ import (
 	"github.com/relux-works/alexis-agents-infra/tools/agents-infra/internal/infra"
 )
 
+var (
+	Version   = "dev"
+	Commit    = "unknown"
+	BuildDate = "unknown"
+)
+
 func main() {
 	if err := run(os.Args[1:]); err != nil {
 		fmt.Fprintln(os.Stderr, err)
@@ -28,6 +34,8 @@ func run(args []string) error {
 		return runRefreshLinks(args[1:])
 	case "doctor":
 		return runDoctor(args[1:])
+	case "version", "--version":
+		return runVersion()
 	case "help", "-h", "--help":
 		return usageError()
 	default:
@@ -115,6 +123,11 @@ func runDoctor(args []string) error {
 	return nil
 }
 
+func runVersion() error {
+	fmt.Fprintf(os.Stdout, "agents-infra %s commit=%s build_date=%s\n", Version, Commit, BuildDate)
+	return nil
+}
+
 func resolveLayout(mode, sourceDir, homeDir, projectDir string, positional []string) (infra.Layout, error) {
 	if sourceDir == "" {
 		sourceDir = os.Getenv("AGENTS_INFRA_SOURCE_DIR")
@@ -155,6 +168,7 @@ func usageError() error {
 
 func usageText() string {
 	return `Usage:
+  agents-infra version
   agents-infra setup global [--source-dir DIR] [--home-dir DIR] [--no-sync]
   agents-infra setup local [PROJECT_DIR] [--source-dir DIR] [--project-dir DIR] [--no-sync]
   agents-infra refresh-links --agents-dir DIR --claude-dir DIR --codex-dir DIR --bin-dir DIR [--mode global|local]

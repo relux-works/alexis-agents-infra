@@ -6,6 +6,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"runtime"
 	"sort"
 	"strings"
 )
@@ -424,20 +425,20 @@ func setupHelpers(layout Layout, out io.Writer) error {
 }
 
 func installCLIWrapper(layout Layout, out io.Writer) error {
+	if layout.Mode == ModeGlobal {
+		logf(out, "Skipping local CLI wrapper install for global setup; bootstrap owns ~/.local/bin/agents-infra")
+		return nil
+	}
 	if err := os.MkdirAll(layout.BinDir, 0o755); err != nil {
 		return err
 	}
-	path := filepath.Join(layout.BinDir, "agents-infra")
+	goos := runtime.GOOS
+	path := filepath.Join(layout.BinDir, cliWrapperName(goos))
 	sourceDir := layout.SourceDir
 	if sourceDir == "" {
 		sourceDir = layout.AgentsDir
 	}
-	body := fmt.Sprintf(`#!/usr/bin/env sh
-set -eu
-export AGENTS_INFRA_SOURCE_DIR=%q
-cd "$AGENTS_INFRA_SOURCE_DIR/tools/agents-infra"
-exec go run . "$@"
-`, sourceDir)
+	body := cliWrapperBody(goos, sourceDir)
 	if existing, err := os.ReadFile(path); err == nil && string(existing) == body {
 		logf(out, "CLI launcher already up to date: %s", path)
 		return nil
@@ -450,6 +451,25 @@ exec go run . "$@"
 	}
 	logf(out, "Installed CLI launcher: %s", path)
 	return nil
+}
+
+func cliWrapperName(goos string) string {
+	if strings.EqualFold(goos, "windows") {
+		return "agents-infra.cmd"
+	}
+	return "agents-infra"
+}
+
+func cliWrapperBody(goos, sourceDir string) string {
+	if strings.EqualFold(goos, "windows") {
+		return fmt.Sprintf("@echo off\r\nsetlocal\r\nset \"AGENTS_INFRA_SOURCE_DIR=%s\"\r\ncd /d \"%%AGENTS_INFRA_SOURCE_DIR%%\\tools\\agents-infra\"\r\ngo run . %%*\r\n", sourceDir)
+	}
+	return fmt.Sprintf(`#!/usr/bin/env sh
+set -eu
+export AGENTS_INFRA_SOURCE_DIR=%q
+cd "$AGENTS_INFRA_SOURCE_DIR/tools/agents-infra"
+exec go run . "$@"
+`, sourceDir)
 }
 
 func writeClaudeEntrypoint(layout Layout) error {
