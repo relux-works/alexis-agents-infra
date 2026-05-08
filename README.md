@@ -224,8 +224,9 @@ Reference config with:
 
 ### Codex CLI (`codex-config.toml`)
 
-- Model: `gpt-5.4`
+- Model: `gpt-5.5`
 - Reasoning effort: `xhigh`
+- Project docs byte limit: `131072`
 - Trusted projects list
 
 ## Attachments
@@ -265,7 +266,7 @@ After running `agents-infra setup global`:
 │   └── ...
 
 ~/.claude/
-├── CLAUDE.md           # Points to ~/.agents/.instructions/INSTRUCTIONS.md
+├── CLAUDE.md           # Loads @instructions/INSTRUCTIONS.md
 ├── instructions/ -> ~/.agents/.instructions/
 └── skills/
     ├── alexis-agents-infra -> ~/.agents/skills/alexis-agents-infra
@@ -273,7 +274,7 @@ After running `agents-infra setup global`:
     └── ...
 
 ~/.codex/
-├── AGENTS.md -> ~/.agents/.instructions/AGENTS.md
+├── AGENTS.md           # Rendered from ~/.agents/.instructions/AGENTS.md
 ├── config.toml -> ~/.agents/.configs/codex-config.toml
 ├── skills/
 │   └── ... -> ~/.agents/skills/...
@@ -299,17 +300,19 @@ project-root/
 │   └── skills/
 ├── .claude/
 │   ├── CLAUDE.md
+│   ├── instructions/ -> .agents/.instructions/
 │   └── skills/ -> .agents/skills/...
 ├── .codex/
-│   ├── AGENTS.md -> .agents/.instructions/AGENTS.md
+│   ├── AGENTS.md       # Rendered Codex instructions
 │   ├── config.toml -> .agents/.configs/codex-config.toml
 │   └── skills/ -> .agents/skills/...
+├── AGENTS.md           # Rendered project-root Codex instructions
 └── .local/bin/
     ├── agents-attachments -> .agents/.scripts/agents-attachments
     └── agents-infra       # launcher for the Go CLI
 ```
 
-In local-project mode, treat `.agents/` as the one place where the installed runtime is populated. `.claude/` and `.codex/` should stay thin wrappers around it.
+In local-project mode, treat `.agents/` as the installed source/runtime-common tree. `.claude/` and `.codex/` are agent-specific runtime outputs. Codex does not expand Claude-style `@...` include indexes, so `setup` materializes `.codex/AGENTS.md` and project-root `AGENTS.md` as flattened markdown. If a hand-written project-root `AGENTS.md` exists, `setup local` preserves it as `.agents/.instructions/AGENTS.project.md` before rendering the Codex-visible file.
 
 ## Adding New Skills
 

@@ -118,6 +118,10 @@ func runDoctor(args []string) error {
 	fmt.Fprintf(os.Stdout, "git_free: %t\n", report.AgentsGitFree)
 	fmt.Fprintf(os.Stdout, "claude_linked: %t\n", report.ClaudeLinked)
 	fmt.Fprintf(os.Stdout, "codex_linked: %t\n", report.CodexLinked)
+	fmt.Fprintf(os.Stdout, "codex_rendered: %t\n", report.CodexRendered)
+	if report.Layout.Mode == infra.ModeLocal {
+		fmt.Fprintf(os.Stdout, "codex_project_rendered: %t\n", report.CodexProjectRendered)
+	}
 	fmt.Fprintf(os.Stdout, "helpers_linked: %t\n", report.HelpersLinked)
 	fmt.Fprintf(os.Stdout, "infra_skill_link: %t\n", report.InfraSkillLink)
 	return nil

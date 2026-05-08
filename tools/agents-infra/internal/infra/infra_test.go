@@ -58,7 +58,8 @@ func TestSetupLocalCreatesInstalledRuntime(t *testing.T) {
 	assertSymlink(t, filepath.Join(project, ".agents", "skills", "pdf"), filepath.Join(project, ".agents", ".skills", "pdf"))
 	assertSymlink(t, filepath.Join(project, ".claude", "instructions"), filepath.Join(project, ".agents", ".instructions"))
 	assertSymlink(t, filepath.Join(project, ".claude", "skills", "pdf"), filepath.Join(project, ".agents", "skills", "pdf"))
-	assertSymlink(t, filepath.Join(project, ".codex", "AGENTS.md"), filepath.Join(project, ".agents", ".instructions", "AGENTS.md"))
+	assertRenderedInstructions(t, filepath.Join(project, ".codex", "AGENTS.md"))
+	assertRenderedInstructions(t, filepath.Join(project, "AGENTS.md"))
 	assertSymlink(t, filepath.Join(project, ".codex", "skills", "pdf"), filepath.Join(project, ".agents", "skills", "pdf"))
 	assertSymlink(t, filepath.Join(project, ".local", "bin", "agents-attachments"), filepath.Join(project, ".agents", ".scripts", "agents-attachments"))
 
@@ -76,8 +77,8 @@ func TestSetupLocalCreatesInstalledRuntime(t *testing.T) {
 	if err != nil {
 		t.Fatalf("ReadFile(%s): %v", claudeEntry, err)
 	}
-	if !strings.Contains(string(entry), "@../.agents/.instructions/INSTRUCTIONS.md") {
-		t.Fatalf("CLAUDE.md should reference local runtime relatively: %q", string(entry))
+	if !strings.Contains(string(entry), "@instructions/INSTRUCTIONS.md") {
+		t.Fatalf("CLAUDE.md should reference Claude runtime instructions: %q", string(entry))
 	}
 }
 
@@ -96,6 +97,8 @@ func TestSyncSkipsGitAndTemp(t *testing.T) {
 	assertNoPath(t, filepath.Join(project, ".agents", ".git"))
 	assertNoPath(t, filepath.Join(project, ".agents", ".temp"))
 	assertNoPath(t, filepath.Join(project, ".agents", ".gitignore"))
+	assertNoPath(t, filepath.Join(project, ".agents", ".task-board"))
+	assertNoPath(t, filepath.Join(project, ".agents", "task-board.config.json"))
 }
 
 func TestSyncSkipsNestedGitMetadata(t *testing.T) {
@@ -133,7 +136,7 @@ func TestDoctor(t *testing.T) {
 	}
 
 	report := Doctor(layout)
-	if !report.AgentsGitFree || !report.ClaudeLinked || !report.CodexLinked || !report.HelpersLinked || !report.InfraSkillLink {
+	if !report.AgentsGitFree || !report.ClaudeLinked || report.CodexLinked || !report.CodexRendered || !report.CodexProjectRendered || !report.HelpersLinked || !report.InfraSkillLink {
 		t.Fatalf("unexpected doctor report: %+v", report)
 	}
 }
@@ -253,6 +256,27 @@ func TestSetupScrubsStaleNestedGitMetadataFromInstalledRuntime(t *testing.T) {
 	assertNoPath(t, filepath.Join(project, ".agents", ".skills", "pdf", "vendor", ".git"))
 }
 
+func TestSetupLocalPreservesProjectAgentsSourceBeforeRendering(t *testing.T) {
+	source := seedSourceRepo(t)
+	project := t.TempDir()
+	mustMkdir(t, filepath.Join(project, ".agents", ".instructions"))
+	mustWrite(t, filepath.Join(project, ".agents", ".instructions", "PROJECT.md"), "project instructions\n")
+	mustWrite(t, filepath.Join(project, "AGENTS.md"), "# Project\n\n@./.agents/.instructions/PROJECT.md\n\nlocal body\n")
+	layout, err := LocalLayout(source, project)
+	if err != nil {
+		t.Fatalf("LocalLayout: %v", err)
+	}
+
+	if err := Setup(Options{Layout: layout}); err != nil {
+		t.Fatalf("Setup: %v", err)
+	}
+
+	assertExists(t, filepath.Join(project, ".agents", ".instructions", "AGENTS.project.md"))
+	assertRenderedInstructions(t, filepath.Join(project, "AGENTS.md"))
+	assertFileContains(t, filepath.Join(project, "AGENTS.md"), "project instructions")
+	assertFileContains(t, filepath.Join(project, "AGENTS.md"), "local body")
+}
+
 func seedSourceRepo(t *testing.T) string {
 	t.Helper()
 	root := t.TempDir()
@@ -264,18 +288,22 @@ func seedSourceRepo(t *testing.T) string {
 	mustMkdir(t, filepath.Join(root, ".skills", "pdf"))
 	mustMkdir(t, filepath.Join(root, "tools", "agents-infra"))
 	mustMkdir(t, filepath.Join(root, ".temp"))
+	mustMkdir(t, filepath.Join(root, ".task-board"))
 	mustMkdir(t, filepath.Join(root, ".git"))
 
-	mustWrite(t, filepath.Join(root, ".instructions", "INSTRUCTIONS.md"), "instructions")
-	mustWrite(t, filepath.Join(root, ".instructions", "AGENTS.md"), "agents")
+	mustWrite(t, filepath.Join(root, ".instructions", "INSTRUCTIONS.md"), "# Global Instructions\n\n@~/.agents/.instructions/INSTRUCTIONS_PLATFORM.md\n")
+	mustWrite(t, filepath.Join(root, ".instructions", "AGENTS.md"), "# Global Instructions\n\n@~/.agents/.instructions/INSTRUCTIONS_PLATFORM.md\n")
+	mustWrite(t, filepath.Join(root, ".instructions", "INSTRUCTIONS_PLATFORM.md"), "platform instructions\n")
 	mustWrite(t, filepath.Join(root, ".configs", "claude-settings.json"), "{}")
-	mustWrite(t, filepath.Join(root, ".configs", "codex-config.toml"), "model = \"gpt-5.4\"")
+	mustWrite(t, filepath.Join(root, ".configs", "codex-config.toml"), "model = \"gpt-5.5\"")
 	mustWrite(t, filepath.Join(root, ".rules", "default.rules"), "allow")
 	mustWrite(t, filepath.Join(root, ".scripts", "agents-attachments"), "#!/bin/sh\nexit 0\n")
 	mustWrite(t, filepath.Join(root, ".skills", "skill-creator", "SKILL.md"), "creator")
 	mustWrite(t, filepath.Join(root, ".skills", "pdf", "SKILL.md"), "pdf")
 	mustWrite(t, filepath.Join(root, ".gitignore"), "ignored")
 	mustWrite(t, filepath.Join(root, ".temp", "junk.txt"), "junk")
+	mustWrite(t, filepath.Join(root, ".task-board", "README.md"), "board")
+	mustWrite(t, filepath.Join(root, "task-board.config.json"), "{}")
 	mustWrite(t, filepath.Join(root, "tools", "agents-infra", "go.mod"), "module example\n")
 	return root
 }
@@ -316,6 +344,39 @@ func assertSymlink(t *testing.T, path, target string) {
 	}
 	if got != target {
 		t.Fatalf("%s -> %s, want %s", path, got, target)
+	}
+}
+
+func assertRenderedInstructions(t *testing.T, path string) {
+	t.Helper()
+	st, err := os.Lstat(path)
+	if err != nil {
+		t.Fatalf("expected rendered instructions %s to exist: %v", path, err)
+	}
+	if st.Mode()&os.ModeSymlink != 0 {
+		t.Fatalf("expected rendered instructions %s to be a regular file, got symlink", path)
+	}
+	data, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("ReadFile(%s): %v", path, err)
+	}
+	body := string(data)
+	if !strings.Contains(body, generatedInstructionsMarker) {
+		t.Fatalf("rendered instructions missing generated marker: %q", body)
+	}
+	if strings.Contains(body, "@~/.agents/") {
+		t.Fatalf("rendered instructions contain unresolved home include: %q", body)
+	}
+}
+
+func assertFileContains(t *testing.T, path, want string) {
+	t.Helper()
+	data, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("ReadFile(%s): %v", path, err)
+	}
+	if !strings.Contains(string(data), want) {
+		t.Fatalf("%s does not contain %q: %q", path, want, string(data))
 	}
 }
 
