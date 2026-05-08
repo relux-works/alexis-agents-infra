@@ -1,9 +1,10 @@
-model = "gpt-5.4"
+model = "gpt-5.5"
 model_reasoning_effort = "xhigh"
 service_tier = "fast"
+project_doc_max_bytes = 131072
 
 [profiles.fast]
-model = "gpt-5.4"
+model = "gpt-5.5"
 model_reasoning_effort = "xhigh"
 
 [projects."/Users/aagrigore1"]
@@ -72,6 +73,3 @@ trust_level = "trusted"
 [notice]
 "hide_gpt-5.1-codex-max_migration_prompt" = true
 hide_rate_limit_model_nudge = true
-
-[notice.model_migrations]
-"gpt-5.4" = "gpt-5.4-codex"
