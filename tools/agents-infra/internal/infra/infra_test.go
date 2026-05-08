@@ -209,9 +209,24 @@ func TestSetupReplacesManagedPathsWithoutBackups(t *testing.T) {
 	}
 
 	assertSymlink(t, filepath.Join(project, ".claude", "settings.json"), filepath.Join(project, ".agents", ".configs", "claude-settings.json"))
-	assertSymlink(t, filepath.Join(project, ".codex", "config.toml"), filepath.Join(project, ".agents", ".configs", "codex-config.toml"))
+	assertNoPath(t, filepath.Join(project, ".codex", "config.toml"))
 	assertSymlink(t, filepath.Join(project, ".codex", "rules", "default.rules"), filepath.Join(project, ".agents", ".rules", "default.rules"))
 	assertNoGeneratedArtifacts(t, project)
+}
+
+func TestSetupGlobalLinksCodexConfig(t *testing.T) {
+	source := seedSourceRepo(t)
+	home := t.TempDir()
+	layout, err := GlobalLayout(source, home)
+	if err != nil {
+		t.Fatalf("GlobalLayout: %v", err)
+	}
+
+	if err := Setup(Options{Layout: layout}); err != nil {
+		t.Fatalf("Setup: %v", err)
+	}
+
+	assertSymlink(t, filepath.Join(home, ".codex", "config.toml"), filepath.Join(home, ".agents", ".configs", "codex-config.toml"))
 }
 
 func TestSetupPreservesExistingPublicSkillsRegistryEntries(t *testing.T) {

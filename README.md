@@ -228,6 +228,7 @@ Reference config with:
 - Reasoning effort: `xhigh`
 - Project docs byte limit: `131072`
 - Trusted projects list
+- Global setup owns `~/.codex/config.toml`; project-local setup deliberately does not create `.codex/config.toml` so the global model/settings remain authoritative.
 
 ## Attachments
 
@@ -304,7 +305,6 @@ project-root/
 │   └── skills/ -> .agents/skills/...
 ├── .codex/
 │   ├── AGENTS.md       # Rendered Codex instructions
-│   ├── config.toml -> .agents/.configs/codex-config.toml
 │   └── skills/ -> .agents/skills/...
 ├── AGENTS.md           # Rendered project-root Codex instructions
 └── .local/bin/

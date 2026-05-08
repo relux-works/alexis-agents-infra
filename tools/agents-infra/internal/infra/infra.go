@@ -405,8 +405,16 @@ func setupCodex(layout Layout, out io.Writer) error {
 			return err
 		}
 	}
-	if err := createSymlink(filepath.Join(layout.AgentsDir, ".configs", "codex-config.toml"), filepath.Join(layout.CodexDir, "config.toml"), out); err != nil {
-		return err
+	codexConfigPath := filepath.Join(layout.CodexDir, "config.toml")
+	if layout.Mode == ModeGlobal {
+		if err := createSymlink(filepath.Join(layout.AgentsDir, ".configs", "codex-config.toml"), codexConfigPath, out); err != nil {
+			return err
+		}
+	} else {
+		if err := removeManagedPath(codexConfigPath, out); err != nil {
+			return err
+		}
+		logf(out, "Skipped project-local Codex config so global config remains authoritative")
 	}
 	rulesDir := filepath.Join(layout.AgentsDir, ".rules")
 	rules, err := os.ReadDir(rulesDir)
