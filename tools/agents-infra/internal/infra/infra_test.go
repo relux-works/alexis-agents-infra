@@ -136,7 +136,7 @@ func TestDoctor(t *testing.T) {
 	}
 
 	report := Doctor(layout)
-	if !report.AgentsGitFree || !report.ClaudeLinked || report.CodexLinked || !report.CodexRendered || !report.CodexProjectRendered || report.CodexConfigPresent || report.CodexConfigLinked || report.CodexConfigShadowsGlobal || report.CodexConfigEffective != "global" || !report.HelpersLinked || !report.InfraSkillLink {
+	if !report.AgentsGitFree || !report.ClaudeLinked || report.CodexLinked || !report.CodexRendered || !report.CodexProjectRendered || report.CodexConfigPresent || report.CodexConfigLinked || report.CodexConfigGenerated || report.CodexConfigShadowsGlobal || report.CodexConfigEffective != "global" || len(report.CodexMCPEnabled) != 0 || !report.HelpersLinked || !report.InfraSkillLink {
 		t.Fatalf("unexpected doctor report: %+v", report)
 	}
 }
@@ -262,6 +262,105 @@ func TestSetupLocalPreservesCustomProjectCodexConfig(t *testing.T) {
 	}
 }
 
+func TestSetupLocalProjectMCPOptInInstallsCodexLocalLauncher(t *testing.T) {
+	source := seedSourceRepo(t)
+	project := t.TempDir()
+	mustMkdir(t, filepath.Join(project, ".agents", ".configs"))
+	mustWrite(t, filepath.Join(project, ".agents", ".configs", "project-config.toml"), "[codex.mcp]\nenabled_servers = [\"figma\"]\n")
+	layout, err := LocalLayout(source, project)
+	if err != nil {
+		t.Fatalf("LocalLayout: %v", err)
+	}
+
+	if err := Setup(Options{Layout: layout}); err != nil {
+		t.Fatalf("Setup: %v", err)
+	}
+
+	assertNoPath(t, filepath.Join(project, ".codex", "config.toml"))
+	launcherPath := filepath.Join(project, ".local", "bin", "codex-local")
+	assertFileContains(t, launcherPath, generatedCodexConfigMarker)
+	assertFileContains(t, launcherPath, "exec codex")
+	assertFileContains(t, launcherPath, "-c 'mcp_servers.figma.url=\"https://mcp.figma.com/mcp\"'")
+
+	report := Doctor(layout)
+	if report.CodexConfigPresent || report.CodexConfigLinked || report.CodexConfigGenerated || report.CodexConfigShadowsGlobal || report.CodexConfigEffective != "global" {
+		t.Fatalf("project MCP opt-in should not create project-local Codex config: %+v", report)
+	}
+	if len(report.CodexMCPEnabled) != 1 || report.CodexMCPEnabled[0] != "figma" {
+		t.Fatalf("CodexMCPEnabled = %#v, want [figma]", report.CodexMCPEnabled)
+	}
+}
+
+func TestSetupLocalRemovesGeneratedCodexConfigAndLauncherWhenMCPOptInRemoved(t *testing.T) {
+	source := seedSourceRepo(t)
+	project := t.TempDir()
+	mustMkdir(t, filepath.Join(project, ".codex"))
+	mustMkdir(t, filepath.Join(project, ".local", "bin"))
+	mustWrite(t, filepath.Join(project, ".codex", "config.toml"), generatedCodexConfigMarker+"\n[mcp_servers.figma]\nurl = \"https://mcp.figma.com/mcp\"\n")
+	mustWrite(t, filepath.Join(project, ".local", "bin", "codex-local"), "#!/usr/bin/env sh\n"+generatedCodexConfigMarker+"\nexec codex \"$@\"\n")
+	layout, err := LocalLayout(source, project)
+	if err != nil {
+		t.Fatalf("LocalLayout: %v", err)
+	}
+
+	if err := Setup(Options{Layout: layout}); err != nil {
+		t.Fatalf("Setup: %v", err)
+	}
+
+	assertNoPath(t, filepath.Join(project, ".codex", "config.toml"))
+	assertNoPath(t, filepath.Join(project, ".local", "bin", "codex-local"))
+	report := Doctor(layout)
+	if report.CodexConfigPresent || report.CodexConfigGenerated || report.CodexConfigShadowsGlobal {
+		t.Fatalf("generated Codex config should be removed without MCP opt-in: %+v", report)
+	}
+}
+
+func TestSetupLocalMCPOptInPreservesCustomCodexConfig(t *testing.T) {
+	source := seedSourceRepo(t)
+	project := t.TempDir()
+	mustMkdir(t, filepath.Join(project, ".agents", ".configs"))
+	mustMkdir(t, filepath.Join(project, ".codex"))
+	mustWrite(t, filepath.Join(project, ".agents", ".configs", "project-config.toml"), "[codex.mcp]\nenabled_servers = [\"figma\"]\n")
+	mustWrite(t, filepath.Join(project, ".codex", "config.toml"), "model = \"custom\"\n")
+	layout, err := LocalLayout(source, project)
+	if err != nil {
+		t.Fatalf("LocalLayout: %v", err)
+	}
+
+	if err := Setup(Options{Layout: layout}); err != nil {
+		t.Fatalf("Setup: %v", err)
+	}
+
+	assertFileContains(t, filepath.Join(project, ".codex", "config.toml"), "model = \"custom\"")
+	assertFileContains(t, filepath.Join(project, ".local", "bin", "codex-local"), "mcp_servers.figma.url")
+	data, err := os.ReadFile(filepath.Join(project, ".codex", "config.toml"))
+	if err != nil {
+		t.Fatalf("ReadFile(custom config): %v", err)
+	}
+	if strings.Contains(string(data), "[mcp_servers.figma]") {
+		t.Fatalf("custom config should not be rewritten with MCP opt-in: %q", string(data))
+	}
+}
+
+func TestSetupLocalUnknownMCPOptInFails(t *testing.T) {
+	source := seedSourceRepo(t)
+	project := t.TempDir()
+	mustMkdir(t, filepath.Join(project, ".agents", ".configs"))
+	mustWrite(t, filepath.Join(project, ".agents", ".configs", "project-config.toml"), "[codex.mcp]\nenabled_servers = [\"missing\"]\n")
+	layout, err := LocalLayout(source, project)
+	if err != nil {
+		t.Fatalf("LocalLayout: %v", err)
+	}
+
+	err = Setup(Options{Layout: layout})
+	if err == nil {
+		t.Fatal("expected unknown MCP server to fail setup")
+	}
+	if !strings.Contains(err.Error(), "MCP server \"missing\"") {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
 func TestSetupLocalGlobalCodexConfigModeRemovesCustomProjectCodexConfig(t *testing.T) {
 	source := seedSourceRepo(t)
 	project := t.TempDir()
@@ -336,6 +435,7 @@ func TestSetupGlobalLinksCodexConfig(t *testing.T) {
 	if !report.CodexConfigPresent || !report.CodexConfigLinked || report.CodexConfigShadowsGlobal || report.CodexConfigEffective != "global" {
 		t.Fatalf("unexpected global Codex config doctor report: %+v", report)
 	}
+	assertFileNotContains(t, filepath.Join(home, ".codex", "config.toml"), "[mcp_servers.figma]")
 }
 
 func TestSetupPreservesExistingPublicSkillsRegistryEntries(t *testing.T) {
@@ -420,6 +520,7 @@ func seedSourceRepo(t *testing.T) string {
 	mustWrite(t, filepath.Join(root, ".instructions", "INSTRUCTIONS_PLATFORM.md"), "platform instructions\n")
 	mustWrite(t, filepath.Join(root, ".configs", "claude-settings.json"), "{}")
 	mustWrite(t, filepath.Join(root, ".configs", "codex-config.toml"), "model = \"gpt-5.5\"")
+	mustWrite(t, filepath.Join(root, ".configs", "codex-mcp-servers.toml"), "[servers.figma]\nurl = \"https://mcp.figma.com/mcp\"\n")
 	mustWrite(t, filepath.Join(root, ".rules", "default.rules"), "allow")
 	mustWrite(t, filepath.Join(root, ".scripts", "agents-attachments"), "#!/bin/sh\nexit 0\n")
 	mustWrite(t, filepath.Join(root, ".skills", "skill-creator", "SKILL.md"), "creator")
@@ -501,6 +602,17 @@ func assertFileContains(t *testing.T, path, want string) {
 	}
 	if !strings.Contains(string(data), want) {
 		t.Fatalf("%s does not contain %q: %q", path, want, string(data))
+	}
+}
+
+func assertFileNotContains(t *testing.T, path, unwanted string) {
+	t.Helper()
+	data, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("ReadFile(%s): %v", path, err)
+	}
+	if strings.Contains(string(data), unwanted) {
+		t.Fatalf("%s contains unwanted %q: %q", path, unwanted, string(data))
 	}
 }
 

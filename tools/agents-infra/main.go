@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/relux-works/alexis-agents-infra/tools/agents-infra/internal/infra"
 )
@@ -131,11 +132,15 @@ func runDoctor(args []string) error {
 	}
 	fmt.Fprintf(os.Stdout, "codex_config_present: %t\n", report.CodexConfigPresent)
 	fmt.Fprintf(os.Stdout, "codex_config_linked: %t\n", report.CodexConfigLinked)
+	fmt.Fprintf(os.Stdout, "codex_config_generated: %t\n", report.CodexConfigGenerated)
 	fmt.Fprintf(os.Stdout, "codex_config_effective: %s\n", report.CodexConfigEffective)
 	if report.Layout.Mode == infra.ModeLocal {
+		fmt.Fprintf(os.Stdout, "codex_mcp_enabled: %s\n", strings.Join(report.CodexMCPEnabled, ","))
 		fmt.Fprintf(os.Stdout, "codex_config_shadowing_global: %t\n", report.CodexConfigShadowsGlobal)
 		if report.CodexConfigShadowsGlobal {
-			if report.CodexConfigLinked {
+			if report.CodexConfigGenerated {
+				fmt.Fprintf(os.Stdout, "codex_config_action: generated project-local .codex/config.toml is active because local MCP opt-in is configured\n")
+			} else if report.CodexConfigLinked {
 				fmt.Fprintf(os.Stdout, "codex_config_action: managed project-local .codex/config.toml is active; use --codex-config=global to remove it if unintended\n")
 			} else {
 				fmt.Fprintf(os.Stdout, "codex_config_action: custom project-local .codex/config.toml overrides global Codex config; remove it if unintended\n")

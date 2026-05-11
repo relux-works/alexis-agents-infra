@@ -264,6 +264,29 @@ Reference config with:
 - Enforce global config with `agents-infra setup local /path/to/project --codex-config=global`.
 - `agents-infra doctor local` reports `codex_config_shadowing_global: true` when a project-local `.codex/config.toml` is overriding the global config.
 
+### Project-Local Codex MCP Opt-In
+
+No MCP servers are enabled in the global Codex config by default. Projects opt
+in explicitly through `.agents/.configs/project-config.toml`:
+
+```toml
+[codex.mcp]
+enabled_servers = ["figma"]
+```
+
+Known MCP server definitions live in `.configs/codex-mcp-servers.toml`. During
+`agents-infra setup local`, a non-empty `enabled_servers` list installs
+`.local/bin/codex-local`, a launcher that passes the selected MCP servers through
+Codex `-c` overrides. Use it from the project root, for example:
+
+```bash
+./.local/bin/codex-local
+./.local/bin/codex-local exec "check the Figma node"
+```
+
+If the project config is missing or the list is empty, no Codex MCP launcher is
+created and the global config remains authoritative.
+
 ## Attachments
 
 This repo defines a generic agent attachment contract:
