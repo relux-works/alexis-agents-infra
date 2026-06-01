@@ -105,6 +105,51 @@ Key fields:
 - `codex_config_shadowing_global: true` means project-local config overrides the global config; remove it with `--codex-config=global` if unintended.
 - `codex_config_linked: true` means the project-local config is the managed agents-infra symlink, not a custom file.
 
+## MCP server policy
+
+MCP servers are always project-local opt-in. Do not enable MCP servers in the
+global Codex config.
+
+Reason: MCP servers add tool/context surface area. A project should expose only
+the MCPs it actually needs.
+
+Use this pattern:
+
+- Keep known MCP endpoint definitions in the agents-infra source registry:
+  `.configs/codex-mcp-servers.toml`.
+- Enable MCP servers per project through:
+  `.agents/.configs/project-config.toml`.
+- Run `agents-infra setup local ...` after changing project MCP config.
+- Start Codex through `agents-infra codex` from inside the project tree.
+  It walks upward from the current directory, composes every discovered
+  `.agents/.configs/project-config.toml`, resolves enabled MCP definitions from
+  project registries plus the global registry, logs provenance for every config
+  part, then launches `codex` with the resulting `-c` overrides.
+- Use `agents-infra codex --print-config` to inspect the composed config without
+  launching Codex.
+- Use `agents-infra codex -d ...` as the shorthand for Codex yolo mode
+  (`--dangerously-bypass-approvals-and-sandbox`).
+- `.local/bin/codex-local` is only a backward-compatible shim; it delegates to
+  `agents-infra codex`.
+
+Example project config:
+
+```toml
+[codex.mcp]
+enabled_servers = ["figma"]
+```
+
+Expected behavior:
+
+- Plain `codex mcp list` remains empty unless the user explicitly configured
+  global MCPs outside agents-infra.
+- Project-local MCPs are mounted only when starting Codex through
+  `agents-infra codex` from a directory covered by local project config.
+- If no local project config is found, no global MCP server is mounted just
+  because it exists in a registry.
+- `agents-infra doctor local /path/to/project` reports the opt-in list through
+  `codex_mcp_enabled`.
+
 ## Attachments Contract
 
 Incoming user files are modeled as a generic manifest, not as board-specific state.

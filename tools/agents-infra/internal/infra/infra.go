@@ -712,14 +712,7 @@ func setupCodexLocalLauncher(layout Layout, out io.Writer) error {
 	if len(enabledServers) == 0 {
 		return removeGeneratedCodexLocalLauncher(path, out)
 	}
-	registry, err := loadCodexMCPRegistry(layout)
-	if err != nil {
-		return err
-	}
-	body, err := codexLocalLauncherBody(enabledServers, registry)
-	if err != nil {
-		return err
-	}
+	body := codexLocalLauncherBody()
 	if existing, err := os.ReadFile(path); err == nil && string(existing) == body {
 		logf(out, "Codex local MCP launcher already up to date: %s", path)
 		return nil
@@ -734,37 +727,18 @@ func setupCodexLocalLauncher(layout Layout, out io.Writer) error {
 	return nil
 }
 
-func codexLocalLauncherBody(enabledServers []string, registry map[string]codexMCPServer) (string, error) {
+func codexLocalLauncherBody() string {
 	var body strings.Builder
 	body.WriteString("#!/usr/bin/env sh\n")
 	body.WriteString(generatedCodexConfigMarker)
 	body.WriteString("\n")
 	body.WriteString("set -eu\n")
-	body.WriteString("exec codex")
-	for _, name := range enabledServers {
-		if !isBareTOMLKey(name) {
-			return "", fmt.Errorf("MCP server name %q is not a supported TOML bare key", name)
-		}
-		server, ok := registry[name]
-		if !ok {
-			return "", fmt.Errorf("MCP server %q is enabled in %s but is not defined in .configs/codex-mcp-servers.toml", name, projectConfigFileName)
-		}
-		if server.URL == "" {
-			return "", fmt.Errorf("MCP server %q is missing url in .configs/codex-mcp-servers.toml", name)
-		}
-		body.WriteString(" \\\n  -c ")
-		body.WriteString(shellSingleQuote(fmt.Sprintf("mcp_servers.%s.url=%q", name, server.URL)))
-		if server.BearerTokenEnvVar != "" {
-			body.WriteString(" \\\n  -c ")
-			body.WriteString(shellSingleQuote(fmt.Sprintf("mcp_servers.%s.bearer_token_env_var=%q", name, server.BearerTokenEnvVar)))
-		}
-	}
-	body.WriteString(" \\\n  \"$@\"\n")
-	return body.String(), nil
-}
-
-func shellSingleQuote(value string) string {
-	return "'" + strings.ReplaceAll(value, "'", "'\"'\"'") + "'"
+	body.WriteString("DIR=$(CDPATH= cd -- \"$(dirname -- \"$0\")\" && pwd)\n")
+	body.WriteString("if [ -x \"$DIR/agents-infra\" ]; then\n")
+	body.WriteString("  exec \"$DIR/agents-infra\" codex \"$@\"\n")
+	body.WriteString("fi\n")
+	body.WriteString("exec agents-infra codex \"$@\"\n")
+	return body.String()
 }
 
 func removeGeneratedCodexLocalLauncher(path string, out io.Writer) error {

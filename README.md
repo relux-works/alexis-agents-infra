@@ -41,6 +41,7 @@ The canonical interface after bootstrap is:
 - `agents-infra setup global`
 - `agents-infra setup local [PATH]`
 - `agents-infra doctor global|local`
+- `agents-infra codex [--print-config] [-d] [CODEX_ARGS...]`
 - `agents-infra version`
 
 Setup syncs the repo into `.agents`, treats `.skills/` as the authoritative
@@ -139,7 +140,8 @@ or keep it as an explicit project-local override.
 │
 ├── .configs/               # Tool configurations
 │   ├── claude-settings.json    # Claude Code settings (reference)
-│   └── codex-config.toml       # Codex CLI config
+│   ├── codex-config.toml       # Codex CLI config
+│   └── codex-mcp-servers.toml  # Known Codex MCP endpoint definitions
 │
 ├── tools/
 │   └── agents-infra/       # Go CLI source
@@ -274,18 +276,28 @@ in explicitly through `.agents/.configs/project-config.toml`:
 enabled_servers = ["figma"]
 ```
 
-Known MCP server definitions live in `.configs/codex-mcp-servers.toml`. During
-`agents-infra setup local`, a non-empty `enabled_servers` list installs
-`.local/bin/codex-local`, a launcher that passes the selected MCP servers through
-Codex `-c` overrides. Use it from the project root, for example:
+Known MCP server definitions live in `.configs/codex-mcp-servers.toml` and are
+synced into project runtimes. Start Codex through `agents-infra codex` from
+inside the project tree. The launcher walks upward from the current directory,
+composes every discovered `.agents/.configs/project-config.toml`, resolves
+enabled MCP definitions from project registries plus the global registry, logs
+where each part came from, then starts Codex with the resulting `-c` overrides.
 
 ```bash
-./.local/bin/codex-local
-./.local/bin/codex-local exec "check the Figma node"
+agents-infra codex
+agents-infra codex -d -
+agents-infra codex exec "check the Figma node"
+agents-infra codex --print-config
 ```
 
-If the project config is missing or the list is empty, no Codex MCP launcher is
-created and the global config remains authoritative.
+`-d` expands to Codex `--dangerously-bypass-approvals-and-sandbox`. During
+`agents-infra setup local`, a non-empty `enabled_servers` list also installs
+`.local/bin/codex-local` as a backward-compatible shim that delegates to
+`agents-infra codex`.
+
+If no project config is found while walking upward, no global MCP server is
+mounted just because it exists in a registry. The global Codex model/settings
+config remains authoritative.
 
 ## Attachments
 

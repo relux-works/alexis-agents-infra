@@ -279,8 +279,8 @@ func TestSetupLocalProjectMCPOptInInstallsCodexLocalLauncher(t *testing.T) {
 	assertNoPath(t, filepath.Join(project, ".codex", "config.toml"))
 	launcherPath := filepath.Join(project, ".local", "bin", "codex-local")
 	assertFileContains(t, launcherPath, generatedCodexConfigMarker)
-	assertFileContains(t, launcherPath, "exec codex")
-	assertFileContains(t, launcherPath, "-c 'mcp_servers.figma.url=\"https://mcp.figma.com/mcp\"'")
+	assertFileContains(t, launcherPath, "exec \"$DIR/agents-infra\" codex \"$@\"")
+	assertFileNotContains(t, launcherPath, "mcp_servers.figma.url")
 
 	report := Doctor(layout)
 	if report.CodexConfigPresent || report.CodexConfigLinked || report.CodexConfigGenerated || report.CodexConfigShadowsGlobal || report.CodexConfigEffective != "global" {
@@ -332,7 +332,8 @@ func TestSetupLocalMCPOptInPreservesCustomCodexConfig(t *testing.T) {
 	}
 
 	assertFileContains(t, filepath.Join(project, ".codex", "config.toml"), "model = \"custom\"")
-	assertFileContains(t, filepath.Join(project, ".local", "bin", "codex-local"), "mcp_servers.figma.url")
+	assertFileContains(t, filepath.Join(project, ".local", "bin", "codex-local"), "agents-infra\" codex")
+	assertFileNotContains(t, filepath.Join(project, ".local", "bin", "codex-local"), "mcp_servers.figma.url")
 	data, err := os.ReadFile(filepath.Join(project, ".codex", "config.toml"))
 	if err != nil {
 		t.Fatalf("ReadFile(custom config): %v", err)
@@ -342,7 +343,7 @@ func TestSetupLocalMCPOptInPreservesCustomCodexConfig(t *testing.T) {
 	}
 }
 
-func TestSetupLocalUnknownMCPOptInFails(t *testing.T) {
+func TestSetupLocalUnknownMCPOptInDefersValidationToLaunchTime(t *testing.T) {
 	source := seedSourceRepo(t)
 	project := t.TempDir()
 	mustMkdir(t, filepath.Join(project, ".agents", ".configs"))
@@ -352,12 +353,12 @@ func TestSetupLocalUnknownMCPOptInFails(t *testing.T) {
 		t.Fatalf("LocalLayout: %v", err)
 	}
 
-	err = Setup(Options{Layout: layout})
-	if err == nil {
-		t.Fatal("expected unknown MCP server to fail setup")
+	if err := Setup(Options{Layout: layout}); err != nil {
+		t.Fatalf("Setup should defer unknown MCP validation to launch time: %v", err)
 	}
-	if !strings.Contains(err.Error(), "MCP server \"missing\"") {
-		t.Fatalf("unexpected error: %v", err)
+	report := Doctor(layout)
+	if len(report.CodexMCPEnabled) != 1 || report.CodexMCPEnabled[0] != "missing" {
+		t.Fatalf("CodexMCPEnabled = %#v, want [missing]", report.CodexMCPEnabled)
 	}
 }
 
