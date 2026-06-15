@@ -101,9 +101,11 @@ build_cli() {
 
 install_binary() {
   local dest="$BIN_DIR/$BINARY_NAME"
+  local tmp="$dest.tmp.$$"
   mkdir -p "$BIN_DIR"
-  cp "$BUILD_OUTPUT" "$dest"
-  chmod +x "$dest"
+  cp "$BUILD_OUTPUT" "$tmp"
+  chmod +x "$tmp"
+  mv -f "$tmp" "$dest"
   green "Installed binary: $dest"
 }
 

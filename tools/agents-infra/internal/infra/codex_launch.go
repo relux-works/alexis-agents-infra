@@ -92,7 +92,8 @@ func BuildCodexLaunchPlan(startDir, homeDir string, args []string) (CodexLaunchP
 	}
 
 	ancestors := ancestorDirsRootFirst(startDir)
-	enabledOrder, enabledBy, projectConfigs, err := loadCompositeMCPEnablement(ancestors)
+	globalProjectConfigPath := filepath.Join(homeDir, ".agents", ".configs", projectConfigFileName)
+	enabledOrder, enabledBy, projectConfigs, err := loadCompositeMCPEnablement(ancestors, globalProjectConfigPath)
 	if err != nil {
 		return CodexLaunchPlan{}, err
 	}
@@ -250,7 +251,7 @@ func ancestorDirsRootFirst(startDir string) []string {
 	return rootFirst
 }
 
-func loadCompositeMCPEnablement(ancestors []string) ([]string, map[string][]string, []CodexProjectConfigSource, error) {
+func loadCompositeMCPEnablement(ancestors []string, globalProjectConfigPath string) ([]string, map[string][]string, []CodexProjectConfigSource, error) {
 	var enabledOrder []string
 	enabledSeen := map[string]bool{}
 	enabledBy := map[string][]string{}
@@ -258,6 +259,9 @@ func loadCompositeMCPEnablement(ancestors []string) ([]string, map[string][]stri
 
 	for _, dir := range ancestors {
 		path := filepath.Join(dir, ".agents", ".configs", projectConfigFileName)
+		if globalProjectConfigPath != "" && samePath(path, globalProjectConfigPath) {
+			continue
+		}
 		data, err := os.ReadFile(path)
 		if os.IsNotExist(err) {
 			continue

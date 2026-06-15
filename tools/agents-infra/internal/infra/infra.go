@@ -116,6 +116,9 @@ func Setup(opts Options) error {
 		}
 		logf(opts.Stdout, "Synced source repo into %s", opts.Layout.AgentsDir)
 	}
+	if err := removeGlobalProjectConfig(opts.Layout, opts.Stdout); err != nil {
+		return err
+	}
 	if err := scrubInstalledGitMetadata(opts.Layout, opts.Stdout); err != nil {
 		return err
 	}
@@ -238,6 +241,23 @@ func syncRepo(sourceDir, agentsDir string) error {
 		}
 		return copyFile(path, dst, info.Mode())
 	})
+}
+
+func removeGlobalProjectConfig(layout Layout, out io.Writer) error {
+	if layout.Mode != ModeGlobal {
+		return nil
+	}
+	path := filepath.Join(layout.AgentsDir, ".configs", projectConfigFileName)
+	if _, err := os.Lstat(path); os.IsNotExist(err) {
+		return nil
+	} else if err != nil {
+		return fmt.Errorf("stat global project config %s: %w", path, err)
+	}
+	if err := os.Remove(path); err != nil {
+		return fmt.Errorf("remove global project config %s: %w", path, err)
+	}
+	logf(out, "Removed stale global project config: %s", path)
+	return nil
 }
 
 func shouldSkip(rel string, isDir bool) bool {

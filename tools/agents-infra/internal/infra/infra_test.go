@@ -182,6 +182,24 @@ func TestSetupGlobalDoesNotInstallCLIWrapper(t *testing.T) {
 	assertNoPath(t, filepath.Join(home, ".local", "bin", "agents-infra.cmd"))
 }
 
+func TestSetupGlobalRemovesStaleProjectConfig(t *testing.T) {
+	source := seedSourceRepo(t)
+	home := t.TempDir()
+	layout, err := GlobalLayout(source, home)
+	if err != nil {
+		t.Fatalf("GlobalLayout: %v", err)
+	}
+	staleConfig := filepath.Join(home, ".agents", ".configs", projectConfigFileName)
+	mustMkdir(t, filepath.Dir(staleConfig))
+	mustWrite(t, staleConfig, "[codex.mcp]\nenabled_servers = [\"figma\"]\n")
+
+	if err := Setup(Options{Layout: layout}); err != nil {
+		t.Fatalf("Setup: %v", err)
+	}
+
+	assertNoPath(t, staleConfig)
+}
+
 func TestSetupRemovesGeneratedArtifacts(t *testing.T) {
 	source := seedSourceRepo(t)
 	project := t.TempDir()

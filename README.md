@@ -268,8 +268,8 @@ Reference config with:
 
 ### Project-Local Codex MCP Opt-In
 
-No MCP servers are enabled in the global Codex config by default. Projects opt
-in explicitly through `.agents/.configs/project-config.toml`:
+Agents-infra does not enable MCP servers in the global Codex config by default.
+Projects opt in explicitly through `.agents/.configs/project-config.toml`:
 
 ```toml
 [codex.mcp]
@@ -295,9 +295,11 @@ agents-infra codex --print-config
 `.local/bin/codex-local` as a backward-compatible shim that delegates to
 `agents-infra codex`.
 
-If no project config is found while walking upward, no global MCP server is
-mounted just because it exists in a registry. The global Codex model/settings
-config remains authoritative.
+If no project config is found while walking upward, agents-infra does not mount
+an MCP server just because it exists in a registry. User-managed global MCP
+servers in the base Codex config remain Codex's responsibility, not
+agents-infra project opt-in state. The global Codex model/settings config
+remains authoritative.
 
 ## Attachments
 

@@ -107,11 +107,13 @@ Key fields:
 
 ## MCP server policy
 
-MCP servers are always project-local opt-in. Do not enable MCP servers in the
-global Codex config.
+MCP servers managed by agents-infra are project-local opt-in. Agents-infra does
+not enable MCP servers in the global Codex config.
 
 Reason: MCP servers add tool/context surface area. A project should expose only
-the MCPs it actually needs.
+the MCPs it actually needs. User-managed global MCP servers may still exist in
+Codex's base config, but agents-infra project opt-in should not create global
+defaults.
 
 Use this pattern:
 
@@ -145,8 +147,8 @@ Expected behavior:
   global MCPs outside agents-infra.
 - Project-local MCPs are mounted only when starting Codex through
   `agents-infra codex` from a directory covered by local project config.
-- If no local project config is found, no global MCP server is mounted just
-  because it exists in a registry.
+- If no local project config is found, agents-infra does not mount an MCP server
+  just because it exists in a registry.
 - `agents-infra doctor local /path/to/project` reports the opt-in list through
   `codex_mcp_enabled`.
 

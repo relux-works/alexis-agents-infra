@@ -67,18 +67,20 @@ func TestBuildCodexLaunchPlanComposesAncestorConfigsAndProvenance(t *testing.T) 
 	}
 }
 
-func TestBuildCodexLaunchPlanNoProjectOptInDoesNotEnableGlobalMCP(t *testing.T) {
+func TestBuildCodexLaunchPlanIgnoresHomeAgentsProjectConfigWithoutProjectOptIn(t *testing.T) {
 	home := t.TempDir()
-	start := t.TempDir()
+	start := filepath.Join(home, "project", "subdir")
+	mustMkdir(t, start)
 	mustMkdir(t, filepath.Join(home, ".agents", ".configs"))
 	mustWrite(t, filepath.Join(home, ".agents", ".configs", "codex-mcp-servers.toml"), "[servers.figma]\nurl = \"https://global.example/figma\"\n")
+	mustWrite(t, filepath.Join(home, ".agents", ".configs", "project-config.toml"), "[codex.mcp]\nenabled_servers = [\"figma\"]\n")
 
 	plan, err := BuildCodexLaunchPlan(start, home, []string{"exec", "hello"})
 	if err != nil {
 		t.Fatalf("BuildCodexLaunchPlan: %v", err)
 	}
 	if len(plan.MCPServers) != 0 || len(plan.ConfigArgs) != 0 {
-		t.Fatalf("global registry should not enable MCP by itself: %+v", plan)
+		t.Fatalf("home agents registry/config should not enable MCP without project opt-in: %+v", plan)
 	}
 	wantArgs := []string{"exec", "hello"}
 	if !reflect.DeepEqual(plan.Args, wantArgs) {
