@@ -32,6 +32,13 @@ Example: before extracting screenshots, check if `ios-ui-validation` skill has i
 * Make the change in the source repo, then sync/install it into `~/.agents` with the repo's setup/install flow.
 * Treat direct edits inside `~/.agents` as local hotfixes only when the user explicitly asks for that, and say clearly that the source repo still needs the same change.
 
+## Fix Reusable Workflow Contracts At Source
+
+* Do not build project-local workarounds around a broken, incomplete, or awkward reusable skill/tool contract.
+* If a reusable skill/tool blocks the clean implementation path, first identify its real source repository, fix the source, run that repo's setup/install flow, and then use the corrected skill/tool.
+* Keep temporary probes under the active project's `.temp/`, but do not leave reusable scripts, command patterns, Make targets, or workflow rules stranded in a product repo when they belong to the shared skill/tool.
+* When a skill/tool fix is required during a tracked task, document the source repo path, setup command, and verification evidence in the task's normal documentation or board flow before continuing.
+
 ---
 
 ## Creating Skills (Our Pattern)

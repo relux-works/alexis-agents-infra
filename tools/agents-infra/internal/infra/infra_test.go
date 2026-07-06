@@ -35,8 +35,24 @@ func TestCLIWrapperBodyForWindows(t *testing.T) {
 	if !strings.Contains(body, "AGENTS_INFRA_SOURCE_DIR=C:\\src\\alexis-agents-infra") {
 		t.Fatalf("windows wrapper body missing source dir: %q", body)
 	}
+	if !strings.Contains(body, "AGENTS_INFRA_CALLER_CWD=%CD%") {
+		t.Fatalf("windows wrapper body missing caller cwd preservation: %q", body)
+	}
 	if !strings.Contains(body, "go run . %*") {
 		t.Fatalf("windows wrapper body missing go run invocation: %q", body)
+	}
+}
+
+func TestCLIWrapperBodyForUnixPreservesCallerCWD(t *testing.T) {
+	body := cliWrapperBody("darwin", `/src/alexis-agents-infra`)
+	if !strings.Contains(body, `export AGENTS_INFRA_SOURCE_DIR="/src/alexis-agents-infra"`) {
+		t.Fatalf("unix wrapper body missing source dir export: %q", body)
+	}
+	if !strings.Contains(body, "AGENTS_INFRA_CALLER_CWD=$(pwd)") {
+		t.Fatalf("unix wrapper body missing caller cwd capture: %q", body)
+	}
+	if !strings.Contains(body, "export AGENTS_INFRA_CALLER_CWD") {
+		t.Fatalf("unix wrapper body missing caller cwd export: %q", body)
 	}
 }
 

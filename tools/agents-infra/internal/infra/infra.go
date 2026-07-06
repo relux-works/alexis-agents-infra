@@ -810,11 +810,13 @@ func cliWrapperName(goos string) string {
 
 func cliWrapperBody(goos, sourceDir string) string {
 	if strings.EqualFold(goos, "windows") {
-		return fmt.Sprintf("@echo off\r\nsetlocal\r\nset \"AGENTS_INFRA_SOURCE_DIR=%s\"\r\ncd /d \"%%AGENTS_INFRA_SOURCE_DIR%%\\tools\\agents-infra\"\r\ngo run . %%*\r\n", sourceDir)
+		return fmt.Sprintf("@echo off\r\nsetlocal\r\nset \"AGENTS_INFRA_SOURCE_DIR=%s\"\r\nset \"AGENTS_INFRA_CALLER_CWD=%%CD%%\"\r\ncd /d \"%%AGENTS_INFRA_SOURCE_DIR%%\\tools\\agents-infra\"\r\ngo run . %%*\r\n", sourceDir)
 	}
 	return fmt.Sprintf(`#!/usr/bin/env sh
 set -eu
 export AGENTS_INFRA_SOURCE_DIR=%q
+AGENTS_INFRA_CALLER_CWD=$(pwd)
+export AGENTS_INFRA_CALLER_CWD
 cd "$AGENTS_INFRA_SOURCE_DIR/tools/agents-infra"
 exec go run . "$@"
 `, sourceDir)

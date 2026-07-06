@@ -18,6 +18,8 @@ var (
 	BuildDate = "unknown"
 )
 
+const callerCWDEnv = "AGENTS_INFRA_CALLER_CWD"
+
 func main() {
 	if err := run(os.Args[1:]); err != nil {
 		fmt.Fprintln(os.Stderr, err)
@@ -156,7 +158,7 @@ func runDoctor(args []string) error {
 }
 
 func runCodex(args []string) error {
-	plan, err := infra.BuildCodexLaunchPlan("", "", args)
+	plan, err := infra.BuildCodexLaunchPlan(os.Getenv(callerCWDEnv), "", args)
 	if err != nil {
 		return err
 	}
@@ -200,6 +202,8 @@ func resolveLayout(mode, sourceDir, homeDir, projectDir string, positional []str
 		if projectDir == "" {
 			if len(positional) > 0 {
 				projectDir = positional[0]
+			} else if callerCWD := os.Getenv(callerCWDEnv); callerCWD != "" {
+				projectDir = callerCWD
 			} else {
 				projectDir = "."
 			}

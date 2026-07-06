@@ -7,6 +7,13 @@
 * The workflow is: **trigger → skill → task tracking → implement → review → reopen or close.** Never jump straight to implementation because it feels faster.
 * Speed is a side effect of good process, not a substitute for it. A change done fast but untracked is worse than a change done properly.
 
+## Stop-The-Line: No Forced Fits
+
+* Do not force a solution when the clean path stops making sense. If implementation reveals a platform/API limitation, missing product decision, UX state-model conflict, architecture boundary, or ownership constraint, stop and rethink before adding another workaround layer.
+* A forced fit is visible when each attempt requires more stubs, flags, priority rules, mock-only behavior, special cases, or tests that avoid the real behavior. Tests and stubs do not make an invalid model valid.
+* When autonomous resolution is not clean, document the constraint, evidence, failed assumption, viable options, and tradeoffs in the repo's task/documentation flow. Then ask the human for the decision or mark the task `blocked` with the exact input needed.
+* Do not spend more time building a tower of compensating hacks after the underlying assumption has failed. Stop, surface the decision, and resume only after the product or architecture direction is explicit.
+
 ---
 
 ## Version Control
@@ -38,7 +45,6 @@
 * **All research must go through the repo's established task/documentation flow.** Never keep research only in conversation context.
 * If the active repo or skill defines an artifact location, store research findings there and link them from the relevant task/doc/worklog.
 * If no project-specific convention exists — store in `.temp/` with descriptive names (`research-auth-flow.md`, `analysis-performance.md`).
-* For `/Users/alexis/src/x-platform-airdrop` Tap2Cash BLE pairing/messaging performance work, record durable findings and fixes in `docs/tap2cash-ble-messaging-kb.md` and link the relevant `.task-board/...` outcome artifact. Raw role-swap logs stay in `.temp/`.
 * **Why:** Context windows collapse. If research lives only in the conversation, it's lost forever when the session resets. Files persist.
 * Sub-agents doing research/analysis **must** write their findings to files before finishing.
 * Reference research artifacts from the relevant task/doc/worklog so the next session can find them quickly.

@@ -133,6 +133,10 @@ Use this pattern:
   (`--dangerously-bypass-approvals-and-sandbox`).
 - `.local/bin/codex-local` is only a backward-compatible shim; it delegates to
   `agents-infra codex`.
+- Project-local helpers must preserve the caller working directory even when
+  they run this source checkout via `go run`; `codex-local --print-config`
+  should report the directory where it was invoked, not
+  `.agents/tools/agents-infra`.
 
 Example project config:
 

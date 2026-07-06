@@ -97,6 +97,7 @@ or keep it as an explicit project-local override.
 │   ├── INSTRUCTIONS.md     # Entry point (loads all modules)
 │   ├── AGENTS.md           # Entry point for Codex CLI
 │   ├── INSTRUCTIONS_ATTACHMENTS.md
+│   ├── INSTRUCTIONS_BROWSER_AUTOMATION.md
 │   ├── INSTRUCTIONS_PLATFORM.md
 │   ├── INSTRUCTIONS_STRUCTURE.md
 │   ├── INSTRUCTIONS_TOOLS.md
@@ -160,6 +161,7 @@ Modular instruction files in `.instructions/`:
 | `AGENTS.md` | Entry point for Codex CLI |
 | `INSTRUCTIONS_PLATFORM.md` | Target platform preferences (iOS > macOS) |
 | `INSTRUCTIONS_STRUCTURE.md` | Project structure conventions |
+| `INSTRUCTIONS_BROWSER_AUTOMATION.md` | No-focus browser scripting and authenticated browser-session rules |
 | `INSTRUCTIONS_TOOLS.md` | Allowed CLI tools |
 | `INSTRUCTIONS_SKILLS.md` | Skills system usage |
 | `INSTRUCTIONS_DIAGRAMS.md` | C4/PlantUML diagram rules |
@@ -293,7 +295,10 @@ agents-infra codex --print-config
 `-d` expands to Codex `--dangerously-bypass-approvals-and-sandbox`. During
 `agents-infra setup local`, a non-empty `enabled_servers` list also installs
 `.local/bin/codex-local` as a backward-compatible shim that delegates to
-`agents-infra codex`.
+`agents-infra codex`. The project-local `agents-infra` helper preserves the
+caller's working directory before it runs the source checkout with `go run`, so
+`codex-local --print-config` should report the directory where the user invoked
+it, not `.agents/tools/agents-infra`.
 
 If no project config is found while walking upward, agents-infra does not mount
 an MCP server just because it exists in a registry. User-managed global MCP
