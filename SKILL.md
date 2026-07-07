@@ -145,6 +145,46 @@ Example project config:
 enabled_servers = ["figma"]
 ```
 
+For day-to-day use, projects should keep MCP opt-in in
+`.agents/.configs/project-config.toml` and users should start Codex through the
+agents-infra launcher, not through plain `codex`. The launcher renders the
+composed project config and applies it to Codex with `-c` overrides for that
+session.
+
+Recommended project flow:
+
+```bash
+# From the project root after editing .agents/.configs/project-config.toml
+agents-infra setup local "$PWD"
+
+# Inspect the rendered config without launching Codex
+agents-infra codex --print-config
+
+# Launch Codex with the rendered project-local MCP config applied
+agents-infra codex
+agents-infra codex -d -
+agents-infra codex exec "inspect the enabled MCP tools"
+```
+
+If the user wants the normal `codex` command to always apply project-local MCP
+config, add a shell function to `~/.zshrc` or `~/.bashrc`. Use a function rather
+than a plain alias so arguments are forwarded correctly:
+
+```bash
+codex-raw() {
+  command codex "$@"
+}
+
+codex() {
+  agents-infra codex "$@"
+}
+```
+
+After reloading the shell, `codex --print-config`, `codex -d -`, and
+`codex exec ...` will go through `agents-infra codex`; `codex-raw ...` remains
+available when the user explicitly wants the unwrapped Codex CLI. Do not add MCP
+servers to global `~/.codex/config.toml` just to make plain `codex` work.
+
 Definitions may be streamable HTTP servers with `url` or stdio servers with
 `command` and optional `args`. `lldb` is available as an opt-in stdio definition
 using `command = "lldb-mcp"`. On macOS, `./setup.sh` installs Homebrew `llvm`
