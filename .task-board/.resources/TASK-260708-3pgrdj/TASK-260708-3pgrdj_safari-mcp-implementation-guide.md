@@ -25,4 +25,4 @@ Implementation expectations:
   - `mcp_servers.safari.command="/Applications/Safari Technology Preview.app/Contents/MacOS/safaridriver"`
   - `mcp_servers.safari.args=["--mcp"]`
 - Preserve existing dirty LLDB/Figma changes and do not revert unrelated work.
-- Run `./setup.sh` and verify installed `/Users/alexis/.codex/AGENTS.md` includes the supported MCP list.
+- Run `./setup.sh` and verify installed `~/.codex/AGENTS.md` includes the supported MCP list.

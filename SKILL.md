@@ -1,8 +1,8 @@
 ---
-name: alexis-agents-infra
+name: relux-agents-infra
 description: Shared agent infrastructure repo for Claude Code and Codex CLI. Use when updating global agent instructions, skills, symlink setup, tool configs, rules, or the generic agents attachments manifest contract and helper tooling.
 triggers:
-  - alexis-agents-infra
+  - relux-agents-infra
   - agents infra
   - agent infrastructure
   - shared agent config
@@ -18,7 +18,7 @@ triggers:
   - настройки claude
 ---
 
-# alexis-agents-infra
+# relux-agents-infra
 
 Source repo for the shared agent infrastructure that installs into `~/.agents`, `~/.claude`, and `~/.codex`.
 
@@ -39,7 +39,7 @@ Use this repo when you need to:
 ## Quick start
 
 ```bash
-cd /path/to/alexis-agents-infra
+cd /path/to/relux-agents-infra
 ./setup.sh
 .\\setup.ps1
 

@@ -12,7 +12,7 @@ Focus:
 - Run `git diff --check`.
 - Run `./setup.sh` to sync installed runtime.
 - Smoke `agents-infra codex --print-config` from a temp project with `enabled_servers = ["safari"]`.
-- Verify `/Users/alexis/.codex/AGENTS.md` lists `figma`, `lldb`, and `safari`.
+- Verify `~/.codex/AGENTS.md` lists `figma`, `lldb`, and `safari`.
 - Check all applicable checklist items, attach a task-scoped outcome resource, and move the task to `to-review`.
 
 Avoid long re-research. The official WebKit source is already attached in the task precondition resource.

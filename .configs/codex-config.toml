@@ -31,43 +31,7 @@ trust_level = "trusted"
 [projects."/Users/aagrigore1/.claude/skills"]
 trust_level = "untrusted"
 
-[projects."/Users/alexis/src/xflow/xcflow-ios_comparison"]
-trust_level = "trusted"
-
 [projects."/"]
-trust_level = "trusted"
-
-[projects."/Users/alexis/src/xflow/xflow-ios"]
-trust_level = "trusted"
-
-[projects."/Users/alexis/src/relux-works/skill-project-management"]
-trust_level = "trusted"
-
-[projects."/Users/alexis/src/relux-works/skill-ios-app-manager"]
-trust_level = "trusted"
-
-[projects."/Users/alexis"]
-trust_level = "trusted"
-
-[projects."/Users/alexis/src/patents/mcp-with-approvals"]
-trust_level = "trusted"
-
-[projects."/Users/alexis/src/relux-works/skill-market-impulse"]
-trust_level = "trusted"
-
-[projects."/Users/alexis/src/relux-works/skill-currency-exchange"]
-trust_level = "trusted"
-
-[projects."/Users/alexis/src/bsim"]
-trust_level = "trusted"
-
-[projects."/Users/alexis/src/multi-tun"]
-trust_level = "trusted"
-
-[projects."/Users/alexis/src/interview_questions"]
-trust_level = "trusted"
-
-[projects."/Users/alexis/Downloads"]
 trust_level = "trusted"
 
 [notice]

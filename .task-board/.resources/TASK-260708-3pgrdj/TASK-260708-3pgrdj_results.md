@@ -22,7 +22,7 @@
   - `mcp_servers.safari.command="/Applications/Safari Technology Preview.app/Contents/MacOS/safaridriver"`
   - `mcp_servers.safari.args=["--mcp"]`
   - log `.temp/TASK-260708-3pgrdj/print-config-safari-final-01.log`
-- Installed `/Users/alexis/.codex/AGENTS.md` includes `figma`, `lldb`, and `safari` in the supported project-local MCP list; log `.temp/TASK-260708-3pgrdj/installed-agents-md-check-final-01.log`
+- Installed `~/.codex/AGENTS.md` includes `figma`, `lldb`, and `safari` in the supported project-local MCP list; log `.temp/TASK-260708-3pgrdj/installed-agents-md-check-final-01.log`
 
 ## Notes
 

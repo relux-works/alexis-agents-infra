@@ -1,11 +1,11 @@
 ## Status
-to-review
+done
 
 ## Assigned To
-(none)
+codex
 
 ## Created
-2026-05-08T13:08:08Z
+2026-07-08T09:37:11Z
 
 ## Last Update
 2026-07-08T09:43:22Z

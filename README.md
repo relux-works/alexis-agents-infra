@@ -1,4 +1,4 @@
-# alexis-agents-infra
+# relux-agents-infra
 
 Source repo for shared AI agent configurations, instructions, skills, and rules.
 
@@ -10,7 +10,7 @@ Works with:
 
 ```bash
 # Bootstrap the launcher, then immediately sync the global runtime
-cd /path/to/alexis-agents-infra
+cd /path/to/relux-agents-infra
 ./setup.sh
 
 # Windows bootstrap
@@ -399,7 +399,7 @@ After running `agents-infra setup global`:
 ```
 ~/.agents/
 ├── skills/
-│   ├── alexis-agents-infra -> ~/.agents
+│   ├── relux-agents-infra -> ~/.agents
 │   ├── skill-creator -> ~/.agents/.skills/skill-creator
 │   └── ...
 
@@ -407,7 +407,7 @@ After running `agents-infra setup global`:
 ├── CLAUDE.md           # Loads @instructions/INSTRUCTIONS.md
 ├── instructions/ -> ~/.agents/.instructions/
 └── skills/
-    ├── alexis-agents-infra -> ~/.agents/skills/alexis-agents-infra
+    ├── relux-agents-infra -> ~/.agents/skills/relux-agents-infra
     ├── skill-creator/ -> ~/.agents/skills/skill-creator
     └── ...
 
@@ -424,7 +424,7 @@ After running `agents-infra setup global`:
 
 Meaning of the two skill trees:
 - `.skills/` is the authoritative skill content that belongs to this repo, lives under its version control, and is synced into the installed runtime.
-- `skills/` is the external runtime area for public skills and tooling. It may contain content that does not belong to `alexis-agents-infra`. `setup` only refreshes the managed links it owns there and must not treat that directory as repo-owned content.
+- `skills/` is the external runtime area for public skills and tooling. It may contain content that does not belong to `relux-agents-infra`. `setup` only refreshes the managed links it owns there and must not treat that directory as repo-owned content.
 
 Project-local install example:
 
@@ -477,7 +477,7 @@ into `~/.agents` and refresh the installed runtime state.
 This repo is version-controlled. Commit your changes:
 
 ```bash
-cd /path/to/alexis-agents-infra
+cd /path/to/relux-agents-infra
 git add -A
 git commit -m "Update skills/instructions"
 git push

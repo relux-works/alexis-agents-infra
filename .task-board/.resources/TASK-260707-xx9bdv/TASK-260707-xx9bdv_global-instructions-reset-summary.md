@@ -1,3 +1,3 @@
-Temp artifact summary: /Users/alexis/src/x-platform-airdrop/ios/swipe2cash/.temp/global-instructions-reset-260707/summary.md
+Temp artifact summary: ~/src/x-platform-airdrop/ios/swipe2cash/.temp/global-instructions-reset-260707/summary.md
 
 Preserved source infra diff, untracked source files, stale installed project-local instruction files, and pre-cleanup workflow files. Removed the x-platform-airdrop/Tap2Cash BLE KB rule from global source workflow instructions, deleted installed global instruction material, ran agents-infra setup global, and verified no project-specific hits or extra installed instruction files remain.

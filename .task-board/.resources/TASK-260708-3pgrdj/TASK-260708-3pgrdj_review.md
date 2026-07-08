@@ -21,13 +21,13 @@ No blocking findings.
 - `cd tools/agents-infra && go vet ./...` passed; log `.temp/TASK-260708-3pgrdj/review-go-vet-01.log`.
 - `git diff --check` passed; log `.temp/TASK-260708-3pgrdj/review-git-diff-check-01.log`.
 - `gofmt -l` over touched Go files returned no files; log `.temp/TASK-260708-3pgrdj/review-gofmt-check-01.log`.
-- `./setup.sh` passed and installed `/Users/alexis/.local/bin/agents-infra`; log `.temp/TASK-260708-3pgrdj/review-setup-01.log`.
-- Installed `/Users/alexis/.codex/AGENTS.md` contains the supported MCP list with `figma`, `lldb`, and `safari`.
+- `./setup.sh` passed and installed `~/.local/bin/agents-infra`; log `.temp/TASK-260708-3pgrdj/review-setup-01.log`.
+- Installed `~/.codex/AGENTS.md` contains the supported MCP list with `figma`, `lldb`, and `safari`.
 - Installed-runtime smoke from `.temp/TASK-260708-3pgrdj/review-smoke` with `enabled_servers = ["safari"]` emitted:
   - `mcp_servers.safari.command="/Applications/Safari Technology Preview.app/Contents/MacOS/safaridriver"`
   - `mcp_servers.safari.args=["--mcp"]`
   - log `.temp/TASK-260708-3pgrdj/review-print-config-safari-01.log`.
-- `rg -n "safari|enabled_servers|mcp_servers" /Users/alexis/.codex/config.toml` returned no matches, so the review did not find a global Codex MCP enablement.
+- `rg -n "safari|enabled_servers|mcp_servers" ~/.codex/config.toml` returned no matches, so the review did not find a global Codex MCP enablement.
 
 ## Notes
 

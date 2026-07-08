@@ -128,7 +128,7 @@ function Verify-Install {
 }
 
 Write-Host ""
-Write-Info "=== alexis-agents-infra setup ==="
+Write-Info "=== relux-agents-infra setup ==="
 Write-Host ""
 Ensure-Go
 Get-VersionMetadata

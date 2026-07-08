@@ -26,7 +26,7 @@ This skill provides:
 - a reusable renderer script: `scripts/render-pdf.sh`
 - a minimal HTML template: `assets/template.html5`
 - shared CSS themes in `assets/themes/`
-- an optional workstation bootstrap path via the `alexis-agents-infra` source repo:
+- an optional workstation bootstrap path via the `relux-agents-infra` source repo:
   - `./setup.sh --with-pdf-tools`
   - `./.scripts/setup-pdf-tools.sh`
 
@@ -38,7 +38,7 @@ Preferred stack:
 - `weasyprint` for HTML -> PDF rendering
 - `pdftotext` for validation that text survived rendering
 
-From the `alexis-agents-infra` source repo, install them with:
+From the `relux-agents-infra` source repo, install them with:
 
 ```bash
 ./setup.sh --with-pdf-tools

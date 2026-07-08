@@ -23,7 +23,7 @@ codex
 - [x] Sync global runtime and verify installed instructions
 
 ## Notes
-Added INSTRUCTIONS_BROWSER_AUTOMATION.md with no-focus-by-default browser scripting policy, linked it from AGENTS.md and INSTRUCTIONS.md, updated README, ran agents-infra setup global --source-dir /Users/alexis/src/relux-works/alexis-agents-infra, and verified installed ~/.agents instructions contain the new module.
+Added INSTRUCTIONS_BROWSER_AUTOMATION.md with no-focus-by-default browser scripting policy, linked it from AGENTS.md and INSTRUCTIONS.md, updated README, ran agents-infra setup global --source-dir ~/src/relux-works/relux-agents-infra, and verified installed ~/.agents instructions contain the new module.
 
 ## Precondition Resources
 (none)

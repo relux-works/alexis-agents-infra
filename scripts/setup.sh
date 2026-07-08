@@ -238,7 +238,7 @@ verify_install() {
 }
 
 print ""
-green "=== alexis-agents-infra setup ==="
+green "=== relux-agents-infra setup ==="
 print ""
 install_go
 install_lldb_mcp

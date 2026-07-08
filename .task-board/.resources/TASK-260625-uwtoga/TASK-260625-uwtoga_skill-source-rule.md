@@ -20,25 +20,25 @@ The rule intentionally does not enumerate individual skills or tools.
 Global runtime was refreshed with:
 
 ```bash
-agents-infra setup global --source-dir /Users/alexis/src/relux-works/alexis-agents-infra
+agents-infra setup global --source-dir ~/src/relux-works/relux-agents-infra
 ```
 
 VideoCall project-local runtime was refreshed with:
 
 ```bash
 agents-infra setup local \
-  -source-dir /Users/alexis/src/relux-works/alexis-agents-infra \
-  -project-dir /Users/alexis/src/videocall/ios
+  -source-dir ~/src/relux-works/relux-agents-infra \
+  -project-dir ~/src/videocall/ios
 ```
 
 ## Verification
 
 - `git diff --check -- .instructions/INSTRUCTIONS_SKILLS.md`: passed.
 - `agents-infra doctor global`: passed.
-- `agents-infra doctor local /Users/alexis/src/videocall/ios`: passed.
+- `agents-infra doctor local ~/src/videocall/ios`: passed.
 - Rendered files contain `Fix Reusable Workflow Contracts At Source`:
-  - `/Users/alexis/.agents/.instructions/INSTRUCTIONS_SKILLS.md`
-  - `/Users/alexis/.codex/AGENTS.md`
-  - `/Users/alexis/src/videocall/ios/.agents/.instructions/INSTRUCTIONS_SKILLS.md`
-  - `/Users/alexis/src/videocall/ios/.codex/AGENTS.md`
-  - `/Users/alexis/src/videocall/ios/AGENTS.md`
+  - `~/.agents/.instructions/INSTRUCTIONS_SKILLS.md`
+  - `~/.codex/AGENTS.md`
+  - `~/src/videocall/ios/.agents/.instructions/INSTRUCTIONS_SKILLS.md`
+  - `~/src/videocall/ios/.codex/AGENTS.md`
+  - `~/src/videocall/ios/AGENTS.md`

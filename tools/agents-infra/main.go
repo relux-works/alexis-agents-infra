@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/relux-works/alexis-agents-infra/tools/agents-infra/internal/infra"
+	"github.com/relux-works/relux-agents-infra/tools/agents-infra/internal/infra"
 )
 
 var (

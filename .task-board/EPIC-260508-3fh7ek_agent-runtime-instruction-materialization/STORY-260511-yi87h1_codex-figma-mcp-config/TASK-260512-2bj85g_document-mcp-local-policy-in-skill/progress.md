@@ -20,7 +20,7 @@ codex
 (empty)
 
 ## Notes
-Added MCP server policy to SKILL.md: MCPs are always project-local opt-in, known endpoints live in .configs/codex-mcp-servers.toml, projects enable via .agents/.configs/project-config.toml, and sessions use .local/bin/codex-local. Ran ./setup.sh and verified the policy is present in source SKILL.md, ~/.agents/SKILL.md, and ~/.codex/skills/alexis-agents-infra/SKILL.md.
+Added MCP server policy to SKILL.md: MCPs are always project-local opt-in, known endpoints live in .configs/codex-mcp-servers.toml, projects enable via .agents/.configs/project-config.toml, and sessions use .local/bin/codex-local. Ran ./setup.sh and verified the policy is present in source SKILL.md, ~/.agents/SKILL.md, and ~/.codex/skills/relux-agents-infra/SKILL.md.
 
 ## Precondition Resources
 (none)

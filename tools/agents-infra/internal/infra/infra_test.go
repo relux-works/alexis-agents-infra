@@ -31,8 +31,8 @@ func TestCLIWrapperNameForWindows(t *testing.T) {
 }
 
 func TestCLIWrapperBodyForWindows(t *testing.T) {
-	body := cliWrapperBody("windows", `C:\src\alexis-agents-infra`)
-	if !strings.Contains(body, "AGENTS_INFRA_SOURCE_DIR=C:\\src\\alexis-agents-infra") {
+	body := cliWrapperBody("windows", `C:\src\relux-agents-infra`)
+	if !strings.Contains(body, "AGENTS_INFRA_SOURCE_DIR=C:\\src\\relux-agents-infra") {
 		t.Fatalf("windows wrapper body missing source dir: %q", body)
 	}
 	if !strings.Contains(body, "AGENTS_INFRA_CALLER_CWD=%CD%") {
@@ -44,8 +44,8 @@ func TestCLIWrapperBodyForWindows(t *testing.T) {
 }
 
 func TestCLIWrapperBodyForUnixPreservesCallerCWD(t *testing.T) {
-	body := cliWrapperBody("darwin", `/src/alexis-agents-infra`)
-	if !strings.Contains(body, `export AGENTS_INFRA_SOURCE_DIR="/src/alexis-agents-infra"`) {
+	body := cliWrapperBody("darwin", `/src/relux-agents-infra`)
+	if !strings.Contains(body, `export AGENTS_INFRA_SOURCE_DIR="/src/relux-agents-infra"`) {
 		t.Fatalf("unix wrapper body missing source dir export: %q", body)
 	}
 	if !strings.Contains(body, "AGENTS_INFRA_CALLER_CWD=$(pwd)") {
@@ -96,6 +96,40 @@ func TestSetupLocalCreatesInstalledRuntime(t *testing.T) {
 	if !strings.Contains(string(entry), "@instructions/INSTRUCTIONS.md") {
 		t.Fatalf("CLAUDE.md should reference Claude runtime instructions: %q", string(entry))
 	}
+}
+
+func TestSetupRemovesStaleRepoSkillSelfLinks(t *testing.T) {
+	source := seedSourceRepo(t)
+	project := t.TempDir()
+	layout, err := LocalLayout(source, project)
+	if err != nil {
+		t.Fatalf("LocalLayout: %v", err)
+	}
+
+	staleLink := filepath.Join(project, ".agents", "skills", "legacy-agents-infra")
+	mustMkdir(t, filepath.Dir(staleLink))
+	if err := os.Symlink(layout.AgentsDir, staleLink); err != nil {
+		t.Fatalf("Symlink(%s): %v", staleLink, err)
+	}
+	staleClaudeLink := filepath.Join(project, ".claude", "skills", "legacy-agents-infra")
+	mustMkdir(t, filepath.Dir(staleClaudeLink))
+	if err := os.Symlink(staleLink, staleClaudeLink); err != nil {
+		t.Fatalf("Symlink(%s): %v", staleClaudeLink, err)
+	}
+	staleCodexLink := filepath.Join(project, ".codex", "skills", "legacy-agents-infra")
+	mustMkdir(t, filepath.Dir(staleCodexLink))
+	if err := os.Symlink(staleLink, staleCodexLink); err != nil {
+		t.Fatalf("Symlink(%s): %v", staleCodexLink, err)
+	}
+
+	if err := Setup(Options{Layout: layout}); err != nil {
+		t.Fatalf("Setup: %v", err)
+	}
+
+	assertNoPath(t, staleLink)
+	assertNoPath(t, staleClaudeLink)
+	assertNoPath(t, staleCodexLink)
+	assertSymlink(t, filepath.Join(project, ".agents", "skills", repoSkillName), filepath.Join(project, ".agents"))
 }
 
 func TestSyncSkipsGitAndTemp(t *testing.T) {
