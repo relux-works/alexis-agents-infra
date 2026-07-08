@@ -54,10 +54,10 @@ The installed `~/.agents/` copy is runtime state and should not keep git metadat
 
 For project-local installs, use `agents-infra setup local /abs/path/to/project`.
 That creates a local runtime layout under the project root:
-- `.agents/` — the installed runtime copy; put the actual contents here
-- `.claude/` — thin Claude shim that points into `.agents`
-- `.codex/` — thin Codex shim that points into `.agents`
-- `.local/bin/` — helper CLIs for the local setup, including `agents-infra`
+- `.agents/`: the installed runtime copy; put the actual contents here
+- `.claude/`: thin Claude shim that points into `.agents`
+- `.codex/`: thin Codex shim that points into `.agents`
+- `.local/bin/`: helper CLIs for the local setup, including `agents-infra`
 
 Project-local setup intentionally does not create `.codex/config.toml`. Codex
 model, reasoning effort, service tier, trusted projects, and TUI notices are
@@ -388,7 +388,7 @@ agents-attachments materialize
 
 ## Rules
 
-`.rules/default.rules` — pre-approved Codex CLI commands:
+`.rules/default.rules`: pre-approved Codex CLI commands:
 - PlantUML download and rendering
 - Temporary directory creation
 
