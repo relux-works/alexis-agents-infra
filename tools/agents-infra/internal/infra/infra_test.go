@@ -9,7 +9,8 @@ import (
 )
 
 const (
-	forcedFitPolicyFixture = "do not fake an impossible platform model with flags, stubs, or mocks"
+	modelAvailabilityPolicyFixture = "retry the preferred model before choosing an autonomous fallback"
+	forcedFitPolicyFixture         = "do not fake an impossible platform model with flags, stubs, or mocks"
 )
 
 func TestLocalLayout(t *testing.T) {
@@ -80,6 +81,9 @@ func TestSetupLocalCreatesInstalledRuntime(t *testing.T) {
 	assertSymlink(t, filepath.Join(project, ".claude", "skills", "pdf"), filepath.Join(project, ".agents", "skills", "pdf"))
 	assertRenderedInstructions(t, filepath.Join(project, ".codex", "AGENTS.md"))
 	assertRenderedInstructions(t, filepath.Join(project, "AGENTS.md"))
+	assertFileContains(t, filepath.Join(project, ".codex", "AGENTS.md"), modelAvailabilityPolicyFixture)
+	assertFileContains(t, filepath.Join(project, "AGENTS.md"), modelAvailabilityPolicyFixture)
+	assertFileContains(t, filepath.Join(project, ".agents", ".instructions", "INSTRUCTIONS_WORKFLOW.md"), modelAvailabilityPolicyFixture)
 	assertFileContains(t, filepath.Join(project, ".codex", "AGENTS.md"), forcedFitPolicyFixture)
 	assertFileContains(t, filepath.Join(project, "AGENTS.md"), forcedFitPolicyFixture)
 	assertFileContains(t, filepath.Join(project, ".agents", ".instructions", "INSTRUCTIONS_WORKFLOW.md"), forcedFitPolicyFixture)
@@ -525,6 +529,7 @@ func TestSetupGlobalLinksCodexConfig(t *testing.T) {
 	}
 
 	assertSymlink(t, filepath.Join(home, ".codex", "config.toml"), filepath.Join(home, ".agents", ".configs", "codex-config.toml"))
+	assertFileContains(t, filepath.Join(home, ".codex", "config.toml"), "hide_rate_limit_model_nudge = true")
 	report := Doctor(layout)
 	if !report.CodexConfigPresent || !report.CodexConfigLinked || report.CodexConfigShadowsGlobal || report.CodexConfigEffective != "global" {
 		t.Fatalf("unexpected global Codex config doctor report: %+v", report)
@@ -612,9 +617,9 @@ func seedSourceRepo(t *testing.T) string {
 	mustWrite(t, filepath.Join(root, ".instructions", "INSTRUCTIONS.md"), "# Global Instructions\n\n@~/.agents/.instructions/INSTRUCTIONS_PLATFORM.md\n@~/.agents/.instructions/INSTRUCTIONS_WORKFLOW.md\n")
 	mustWrite(t, filepath.Join(root, ".instructions", "AGENTS.md"), "# Global Instructions\n\n@~/.agents/.instructions/INSTRUCTIONS_PLATFORM.md\n@~/.agents/.instructions/INSTRUCTIONS_WORKFLOW.md\n")
 	mustWrite(t, filepath.Join(root, ".instructions", "INSTRUCTIONS_PLATFORM.md"), "platform instructions\n")
-	mustWrite(t, filepath.Join(root, ".instructions", "INSTRUCTIONS_WORKFLOW.md"), forcedFitPolicyFixture+"\n")
+	mustWrite(t, filepath.Join(root, ".instructions", "INSTRUCTIONS_WORKFLOW.md"), modelAvailabilityPolicyFixture+"\n"+forcedFitPolicyFixture+"\n")
 	mustWrite(t, filepath.Join(root, ".configs", "claude-settings.json"), "{}")
-	mustWrite(t, filepath.Join(root, ".configs", "codex-config.toml"), "model = \"gpt-5.5\"")
+	mustWrite(t, filepath.Join(root, ".configs", "codex-config.toml"), "model = \"gpt-5.5\"\n\n[notice]\nhide_rate_limit_model_nudge = true\n")
 	mustWrite(t, filepath.Join(root, ".configs", "codex-mcp-servers.toml"), `[servers.figma]
 url = "https://mcp.figma.com/mcp"
 
