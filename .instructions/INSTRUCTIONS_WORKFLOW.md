@@ -9,10 +9,12 @@
 
 ## Stop-The-Line: No Forced Fits
 
-* Do not force a solution when the clean path stops making sense. If implementation reveals a platform/API limitation, missing product decision, UX state-model conflict, architecture boundary, or ownership constraint, stop and rethink before adding another workaround layer.
-* A forced fit is visible when each attempt requires more stubs, flags, priority rules, mock-only behavior, special cases, or tests that avoid the real behavior. Tests and stubs do not make an invalid model valid.
-* When autonomous resolution is not clean, document the constraint, evidence, failed assumption, viable options, and tradeoffs in the repo's task/documentation flow. Then ask the human for the decision or mark the task `blocked` with the exact input needed.
-* Do not spend more time building a tower of compensating hacks after the underlying assumption has failed. Stop, surface the decision, and resume only after the product or architecture direction is explicit.
+* Autonomous completion is the default. Work through difficult, slow, or uncertain implementation problems without escalating merely because they require more investigation, retries, or engineering effort.
+* Stop only when evidence shows that an external platform/API constraint makes the requested behavior objectively impossible or unsafe, or when progress genuinely requires a human product, architecture, ownership, access, or approval decision.
+* A forced fit is visible when each attempt adds more flags, stubs, mocks, priority rules, mock-only behavior, special cases, or tests that avoid the real behavior. Do not use tests or compensating code to make an invalid product or platform model look implemented.
+* Canonical example: before Bluetooth permission, iOS cannot reliably reveal whether Bluetooth is powered off without initializing or otherwise touching CoreBluetooth, which may trigger the permission prompt. A product requirement that prioritizes powered-off Bluetooth state before permission has no clean implementation. Surface permission-first, unknown-state, or requirement-change options instead of adding booleans, stubs, mocks, or priority hacks.
+* Before escalating, persist the exact constraint, evidence, failed assumption, clean approaches attempted, viable alternatives, tradeoffs, and the precise human decision or external input needed in the repo's task/documentation flow.
+* Then present the options or mark the task `blocked` with that exact decision/input. Once the constraint is resolved, resume autonomous execution and finish the task.
 
 ---
 

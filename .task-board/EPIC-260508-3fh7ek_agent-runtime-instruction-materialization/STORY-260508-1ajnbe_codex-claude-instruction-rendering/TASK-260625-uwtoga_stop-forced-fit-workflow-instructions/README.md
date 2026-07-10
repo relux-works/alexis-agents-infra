@@ -1,10 +1,10 @@
-# TASK-260625-uwtoga: stop-forced-fit-workflow-instructions
+# Foundational Stop-The-Line autonomy policy
 
 ## Description
-Add global workflow reinforcement that agents must stop and escalate when a task cannot be solved autonomously without forcing a fragile workaround. Use the Bluetooth permission/off-state failure as the pattern: after discovering an API or product constraint, the agent must document the constraint, present options, and ask/block instead of accumulating hacks and wasting time.
+Strengthen the global forced-fit guardrail so agents finish autonomously whenever a viable path exists, but stop when an external constraint makes the requested model objectively impossible, unsafe, or dependent on a human product, architecture, access, or approval decision.
 
 ## Scope
-Shared workflow instruction module only. Avoid dirty README.md/SKILL.md and Go source files already modified by other work.
+Shared global workflow instructions, renderer regression coverage, source documentation, runtime reinstall, and drift verification. Keep this policy independent from project-management orchestrator review-loop behavior.
 
 ## Acceptance Criteria
-Global workflow instructions contain a clear no-forced-fit rule; the rule says to stop, document constraint/evidence/options, and ask or mark blocked when autonomous implementation cannot proceed without brittle hacks; it warns against using tests or stubs to justify an invalid product/API model.
+Agents continue autonomously through solvable implementation problems; they do not pile on flags, stubs, mocks, priority rules, or workaround layers to fake an impossible platform/product model; escalation persists the constraint, evidence, failed assumption, viable alternatives and tradeoffs, and exact human decision needed; the iOS Bluetooth pre-permission powered-state limitation is the canonical example; Codex and Claude runtime outputs contain the policy after setup.

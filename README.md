@@ -177,7 +177,7 @@ Modular instruction files in `.instructions/`:
 | `INSTRUCTIONS_SKILLS.md` | Skills system usage |
 | `INSTRUCTIONS_DIAGRAMS.md` | C4/PlantUML diagram rules |
 | `INSTRUCTIONS_TESTING.md` | Swift Testing, refactoring workflow |
-| `INSTRUCTIONS_WORKFLOW.md` | Git, task tracking, logging |
+| `INSTRUCTIONS_WORKFLOW.md` | Task tracking, forced-fit escalation, Git, and logging |
 | `INSTRUCTIONS_DOCS.md` | Documentation requirements |
 | `INSTRUCTIONS_STYLE.md` | Communication style |
 
