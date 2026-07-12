@@ -96,6 +96,9 @@ or keep it as an explicit project-local override.
 |------|---------|---------|---------|
 | `./setup.sh` / `./setup.ps1` | Bootstrap the `agents-infra` CLI and sync the global runtime | `./setup.sh`, `.\setup.ps1` | `~/.local/bin/agents-infra`, `~/.agents/`, `~/.claude/`, `~/.codex/`, install-state metadata |
 | `agents-infra` | Set up or inspect global/project-local agent runtimes and launch Codex or Claude Code with project-local MCP opt-ins | `agents-infra setup global`, `agents-infra setup local /path/to/project`, `agents-infra doctor local /path/to/project`, `agents-infra codex --print-config`, `agents-infra claude --print-config` | Runtime directories under the target root; printed diagnostics on stdout |
+| `agents-attachments` | Resolve generic attachment manifests and stage image inputs for inspection | `agents-attachments list`, `agents-attachments path screenshot.png`, `agents-attachments stage-images ./photo.heic --out-dir .temp/image-intake` | `.temp/agents-attachments-manifest.json`, `.temp/agents-attachments/`, staged images and `image-stage-map.json` under caller-selected `.temp/` |
+| `python3` | Run the `agents-attachments` helper and its focused tests | `python3 -m py_compile .scripts/agents-attachments`, `python3 -m unittest tests/test_agents_attachments.py` | Python bytecode cache and task-scoped logs under `.temp/` |
+| `sips` / ImageMagick `magick` | Normalize HEIC/HEIF image inputs for staged inspection | `sips -s format png input.heic --out output.png`, `magick input.heic output.png` | Normalized staged images under caller-selected `.temp/` |
 | `go` | Build, test, and vet the Go CLI in `tools/agents-infra` | `cd tools/agents-infra && go test ./...`, `cd tools/agents-infra && go vet ./...` | Go test cache; task-scoped logs should be written under `.temp/` |
 | `task-board` | Track project work, checklist state, and outcome resources | `task-board q --format compact 'get(TASK-ID) { full }'`, `task-board m 'set_status(TASK-ID, status=development)'` | `.task-board/` and `.task-board/.resources/` |
 | `git` | Inspect repo state and validate diff hygiene | `git status --short`, `git diff --check` | No repo artifact; task-scoped command logs should be written under `.temp/` |
@@ -150,7 +153,7 @@ or keep it as an explicit project-local override.
 │
 ├── .scripts/               # Setup and utility scripts
 │   ├── setup-symlinks.sh   # Internal compatibility wrapper over agents-infra
-│   └── agents-attachments  # Helper for agents-attachments-manifest.json
+│   └── agents-attachments  # Manifest resolver plus image staging helper
 │
 ├── .configs/               # Tool configurations
 │   ├── claude-settings.json    # Claude Code settings (reference)
@@ -174,6 +177,7 @@ Modular instruction files in `.instructions/`:
 | `AGENTS.md` | Entry point for Codex CLI |
 | `INSTRUCTIONS_PLATFORM.md` | Target platform preferences (iOS > macOS) |
 | `INSTRUCTIONS_STRUCTURE.md` | Project structure conventions |
+| `INSTRUCTIONS_ATTACHMENTS.md` | Generic attachment manifest, image staging, inspection, OCR fallback, and redaction workflow |
 | `INSTRUCTIONS_BROWSER_AUTOMATION.md` | No-focus browser scripting and authenticated browser-session rules |
 | `INSTRUCTIONS_REMOTE_AGENTS.md` | Host-agnostic workflow for using remote Claude/agent workers through isolated project copies and patch handoff |
 | `INSTRUCTIONS_TOOLS.md` | Allowed CLI tools |
@@ -417,6 +421,26 @@ history when `CODEX_THREAD_ID` is available:
 ```bash
 agents-attachments materialize
 ```
+
+For image intake, stage explicit paths or manifest references before inspection:
+
+```bash
+agents-attachments stage-images ./photo.heic screenshot.png --out-dir .temp/image-intake
+agents-attachments stage-images --all --manifest .temp/agents-attachments-manifest.json --out-dir .temp/image-intake
+```
+
+`stage-images` keeps originals read-only, writes normalized/copied images under
+the selected scratch directory, and emits `image-stage-map.json` with redacted
+source labels, content hashes, staged filenames, and HEIC normalization details.
+HEIC/HEIF inputs normalize to PNG with macOS `sips` first, then ImageMagick
+(`magick`, then `convert`) as the portable fallback; missing converters fail
+clearly.
+
+Agents should inspect staged images directly through runtime vision first. OCR
+is only a bounded fallback when direct inspection is insufficient. Observations
+must cite the staged filename, evidence, confidence, uncertainty, and redactions;
+do not persist raw ICCID, IMSI, QR payloads, activation codes, tokens, keys, or
+password-like values extracted from images.
 
 ## Rules
 

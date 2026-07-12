@@ -7,3 +7,6 @@ skills/
 # Local runtime scratch and backup artifacts
 .temp/
 *.bak.*
+
+# Raw agent spawn transcripts (task outcome evidence stays local, not in history)
+.task-board/.resources/**/*spawn-log*.log

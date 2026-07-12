@@ -43,7 +43,59 @@ agents-attachments list
 agents-attachments path screenshot.png
 mkdir -p .temp/attachments
 cp "$(agents-attachments path screenshot.png)" .temp/attachments/
+agents-attachments stage-images screenshot.png --out-dir .temp/image-intake
 ```
+
+## Image intake and inspection
+
+Use this workflow for user-provided screenshots, photos, scans, SIM/package photos,
+and other image evidence. It is board-agnostic and works with explicit local
+paths or the generic attachments manifest.
+
+Stage first, inspect staged files:
+
+```bash
+agents-attachments stage-images ./photo.heic screenshot.png --out-dir .temp/image-intake
+agents-attachments stage-images --all --manifest .temp/agents-attachments-manifest.json --out-dir .temp/image-intake
+```
+
+Behavior:
+
+- accepts explicit local paths and manifest references by `id`, `name`, or local file name
+- treats originals as read-only inputs and writes staged files under `--out-dir`
+  (default `.temp/image-intake`)
+- writes and prints a machine-readable mapping JSON
+  (default `<out-dir>/image-stage-map.json`)
+- copies normal image formats as-is
+- normalizes HEIC/HEIF to PNG with macOS `sips` when available, then falls back
+  to ImageMagick (`magick`, then `convert`) on other platforms or when `sips`
+  is unavailable
+- fails clearly if HEIC/HEIF conversion is required but no converter is available
+- redacts ICCID/IMSI/key-like strings from persisted source labels and staged
+  filenames while keeping content hashes for auditability
+
+Inspection rules:
+
+- Prefer direct visual inspection through the runtime's vision or image-viewing
+  capability before OCR.
+- Use OCR only as a bounded fallback when direct inspection cannot answer the
+  question. Do not run unbounded OCR/upscale/retry loops; keep fallback attempts
+  narrow and task-scoped.
+- Tie every observation to a staged filename and mapping entry.
+- Record per-file evidence, confidence (`high`, `medium`, `low`), uncertainty,
+  and any redactions applied.
+- Redact ICCID, IMSI, QR payloads, activation codes, tokens, keys, passwords,
+  and similar secrets before writing notes, docs, task resources, logs, or
+  human-facing output. Do not persist raw sensitive identifiers extracted from
+  images.
+
+Child-agent handoff:
+
+- Pass the staged image directory and mapping JSON path.
+- Propagate `AGENTS_ATTACHMENTS_MANIFEST` only when the child also needs the
+  original generic manifest.
+- Do not require a board, board resource, task ID, or status field for image
+  intake.
 
 ## Codex bootstrap path
 

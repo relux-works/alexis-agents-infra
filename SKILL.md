@@ -233,6 +233,7 @@ Incoming user files are modeled as a generic manifest, not as board-specific sta
 - Default project-local fallback: `.temp/agents-attachments-manifest.json`
 - Helper CLI installed from this repo: `agents-attachments`
 - Codex bootstrap helper: `agents-attachments materialize`
+- Image staging helper: `agents-attachments stage-images`
 
 Runtime responsibilities:
 
@@ -246,6 +247,22 @@ This repo's responsibilities:
 - define the contract in `.instructions/INSTRUCTIONS_ATTACHMENTS.md`
 - ship the helper in `.scripts/agents-attachments`
 - install/symlink the helper via `.scripts/setup-symlinks.sh`
+
+Image intake workflow:
+
+- use `agents-attachments stage-images` for explicit local paths or generic
+  manifest references before inspecting images
+- keep originals read-only and inspect staged files under caller-controlled
+  scratch, usually `.temp/image-intake`
+- use the generated mapping JSON to audit source-to-staged relationships
+- normalize HEIC/HEIF to PNG through macOS `sips` or ImageMagick fallback
+- prefer direct runtime vision first; use OCR only as a bounded fallback
+- tie observations to staged filenames with evidence, confidence, uncertainty,
+  and redaction notes
+- redact ICCID, IMSI, QR payloads, activation codes, tokens, keys, passwords,
+  and similar secrets before persisting or reporting extracted values
+- keep the workflow board-agnostic; do not require task-board IDs, resources,
+  statuses, or directory conventions beyond caller-provided scratch paths
 
 ## Key Paths
 
