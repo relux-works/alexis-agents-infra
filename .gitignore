@@ -1,6 +1,12 @@
 # External skills (not tracked — local repos, symlinks, machine-specific)
 skills/
 
+# Generated local agent runtime (installed/symlinked by agents-infra)
+.agents/
+.claude/
+.codex/
+.local/
+
 # macOS
 .DS_Store
 
@@ -8,5 +14,5 @@ skills/
 .temp/
 *.bak.*
 
-# Raw agent spawn transcripts (task outcome evidence stays local, not in history)
-.task-board/.resources/**/*spawn-log*.log
+# Raw agent transcripts and command logs (task outcome summaries stay versioned)
+.task-board/.resources/**/*.log

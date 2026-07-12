@@ -5,6 +5,15 @@
 
 ## 2026-07-13
 
+### 1718 — Provider Session Policy Review Accepted
+- MILESTONE: `TASK-260713-1bok5k` verified independent Claude provenance and no Codex model/reasoning/yolo leakage in both target repositories.
+- STATUS: Uncached Go tests, vet, build, gofmt, diff-check, print-config, and doctor smokes passed.
+
+### 1713 — Claude Primary Session Isolated from Codex Policy
+- DECISION: `[agents.claude.primary_session]` owns only a non-empty Claude model; Codex model, reasoning effort, and yolo remain provider-local.
+- FIX: `project_config.go`, `claude_launch.go`, setup, print-config, and doctor compose and report Claude provenance independently.
+- STATUS: Full Go test, vet, build, and two-repository Claude print-config/doctor smokes pass with `claude-opus-4-6`.
+
 ### 1610 — Primary-Session Operator Contract Documented
 - FIX: `README.md` and `SKILL.md` now document the primary-session TOML, independent nearest-field precedence, yolo scope, setup/clear, render, doctor, native fallback, and `.codex/config.toml` coexistence.
 - FIX: Corrected the MCP example to `[mcp]`; task-board spawn-ceiling ownership is cross-linked without duplicating its policy.
