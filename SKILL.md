@@ -105,6 +105,85 @@ Key fields:
 - `codex_config_shadowing_global: true` means project-local config overrides the global config; remove it with `--codex-config=global` if unintended.
 - `codex_config_linked: true` means the project-local config is the managed agents-infra symlink, not a custom file.
 
+## Codex primary-session policy
+
+Project policy for the primary `agents-infra codex` session is optional and
+belongs only in `.agents/.configs/project-config.toml`. It is separate from
+`.codex/config.toml` and does not choose task-board child-spawn models.
+
+```toml
+[mcp]
+enabled_servers = ["figma"]
+
+[agents.codex.primary_session]
+model = "gpt-5.6-terra"
+reasoning_effort = "xhigh"
+yolo_mode = false
+```
+
+The table needs at least one supported field. `model` and `reasoning_effort`
+are non-empty strings; `yolo_mode` must be an unquoted TOML boolean. Codex is
+the authority for model availability and model/effort compatibility.
+
+`agents-infra codex` walks from filesystem root to its current directory,
+combining every project config it finds except
+`~/.agents/.configs/project-config.toml`. The nearest explicit field wins;
+omitted fields inherit, and `yolo_mode = false` explicitly masks an inherited
+`true`. A malformed or invalid discovered config fails before launch.
+
+For model and reasoning, precedence is explicit wrapper CLI selection
+(`--model`/`-m`, top-level `-c model=...`, or top-level
+`-c model_reasoning_effort=...`) before project TOML before Codex-native
+resolution. `--profile`/`-p` suppresses project model and reasoning but not
+explicit values supplied with it; it does not suppress yolo. Equal explicit
+duplicates collapse, conflicting values fail, and only arguments before `--`
+take part in model/reasoning/profile wrapper resolution.
+
+Yolo defaults to safe. `-d`, `--danger`, `--yolo`, or the native dangerous flag
+opt an invocation in; otherwise only effective `yolo_mode = true` does. The
+result contains exactly one `--dangerously-bypass-approvals-and-sandbox` when
+enabled. This persistent setting is limited to `agents-infra codex` primary
+launches and never propagates to Claude, `task-board spawn`, run manifests, or
+spawn-ceiling policy.
+
+Use supported setup flags for precise local mutation:
+
+```bash
+agents-infra setup local /path/to/project \
+  --codex-primary-model gpt-5.6-terra \
+  --codex-primary-reasoning-effort xhigh \
+  --codex-yolo-mode=false
+
+agents-infra setup local /path/to/project --clear-codex-primary-session
+```
+
+No primary-session flag preserves project-config bytes. Set flags update only
+their supplied field; explicit false is preserved. Clear removes only the
+primary-session table and conflicts with set flags. All primary flags are
+local-only and reject the global `~/.agents` config path. Parse and atomic-write
+failures preserve the original TOML.
+
+Use these operators before diagnosing or changing session behavior:
+
+```bash
+cd /path/to/project
+agents-infra codex --print-config
+agents-infra doctor local "$PWD"
+agents-infra codex
+```
+
+`--print-config` is non-launching: it shows discovered paths, field provenance,
+profile/CLI suppression, yolo expansion, and final argv. Doctor reports
+`codex_primary_config_valid` plus model, reasoning, and yolo values and their
+sources; absent strings use source `native`, and absent yolo is `false` from
+`default`. For complete troubleshooting and `.codex/config.toml` coexistence,
+see [README.md](README.md#project-primary-codex-session-policy).
+
+Task-board spawn ceilings are documented by the separate
+[task-board spawn-ceiling contract](https://github.com/relux-works/skill-project-management/blob/main/.specs/project-agent-selection-policy.md#task-board-spawn-ceiling-contract).
+Do not add spawn ceilings, model ranks, or task-board resolver policy to
+agents-infra TOML.
+
 ## MCP server policy
 
 MCP servers managed by agents-infra are project-local opt-in. Agents-infra does
@@ -141,7 +220,7 @@ Use this pattern:
 Example project config:
 
 ```toml
-[codex.mcp]
+[mcp]
 enabled_servers = ["figma"]
 ```
 

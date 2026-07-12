@@ -1,0 +1,57 @@
+@startuml
+!theme plain
+
+title Split Configuration Ownership
+
+skinparam componentStyle rectangle
+skinparam packageStyle rectangle
+
+actor "Project operator" as Operator
+
+package "relux-agents-infra" #E8F4FF {
+  artifact ".agents/.configs/\nproject-config.toml" as ProjectTOML
+  component "Project config composer" as Composer
+  component "agents-infra setup local" as InfraSetup
+  component "agents-infra codex" as InfraCodex
+  component "print-config / doctor" as InfraDiagnostics
+}
+
+package "skill-project-management" #FFF4E5 {
+  artifact "task-board.config.json" as BoardJSON
+  component "Spawn ceiling provider" as CeilingProvider
+  component "Model rank + resolver" as Resolver
+  component "task-board spawn" as BoardSpawn
+  component "project_config / models" as BoardDiagnostics
+  artifact "RUN manifest" as Manifest
+}
+
+cloud "Primary Codex session" as Primary
+cloud "Explicit Codex / Claude child" as Child
+
+Operator --> InfraSetup : set/clear primary policy
+InfraSetup --> ProjectTOML : merge only primary table
+ProjectTOML --> Composer : model, effort, yolo
+Composer --> InfraCodex : effective values + provenance
+Composer --> InfraDiagnostics : effective values + provenance
+InfraCodex --> Primary : launch
+
+Operator --> BoardJSON : configure spawn ceilings
+BoardJSON --> CeilingProvider : spawn.ceilings only
+CeilingProvider --> Resolver : typed selected-agent ceiling
+Resolver --> BoardSpawn : resolved explicit selection
+Resolver --> BoardDiagnostics : ranks + ceiling state
+BoardSpawn --> Manifest : requested + resolved audit
+Manifest --> Child : launch resolved pair
+
+note bottom of ProjectTOML
+  Owns primary Codex model,
+  reasoning effort, yolo_mode.
+  Contains no spawn ceiling.
+end note
+
+note bottom of BoardJSON
+  Owns Codex/Claude spawn ceilings.
+  Contains no primary-session or yolo policy.
+end note
+
+@enduml

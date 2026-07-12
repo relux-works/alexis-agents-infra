@@ -80,22 +80,166 @@ Use `--codex-config` when local setup should make an explicit decision:
   runtime at `.agents/.configs/codex-config.toml`, making model/reasoning
   settings project-local by explicit choice.
 
-If a Codex session starts with the wrong model, run:
+### Project primary Codex session policy
+
+Projects may set a primary Codex model, reasoning effort, and persistent yolo
+choice in `.agents/.configs/project-config.toml`. This is optional policy for
+`agents-infra codex`, not a replacement for Codex's own configuration. A
+missing table—or a missing individual model/effort field—leaves that dimension
+to Codex-native project/profile/user/system/default resolution.
+
+Create the local runtime, then either edit the TOML manually or use the setup
+flags below:
+
+```bash
+PROJECT=/abs/path/to/project
+agents-infra setup local "$PROJECT"
+```
+
+```toml
+[mcp]
+enabled_servers = ["figma"]
+
+[agents.codex.primary_session]
+model = "gpt-5.6-terra"
+reasoning_effort = "xhigh"
+yolo_mode = false
+```
+
+`[agents.codex.primary_session]` must contain at least one of these optional
+fields. `model` and `reasoning_effort` are non-empty TOML strings after
+trimming; `yolo_mode` is a real TOML boolean, not a quoted string. Codex—not
+agents-infra—remains responsible for whether a model is available and whether a
+model/effort pair is compatible.
+
+When launched from a project directory, `agents-infra codex` walks from the
+filesystem root to the current directory and reads each
+`.agents/.configs/project-config.toml` it finds. It parses every discovered
+file once, retains absolute paths as provenance, and fails before launch when
+any discovered file is invalid. `~/.agents/.configs/project-config.toml` is
+never a project-policy source. Each primary-session field composes
+independently: the nearest file that explicitly supplies that field wins. In
+particular, a child `yolo_mode = false` masks a parent's `true`; omission means
+inheritance.
+
+For model and reasoning effort, the per-field launch precedence is:
+
+| Priority | Source | Notes |
+| --- | --- | --- |
+| 1 | Explicit Codex selection | `--model`/`-m`, top-level `-c model=...`, or top-level `-c model_reasoning_effort=...` passed through this launcher. |
+| 2 | Effective project primary-session field | Emitted as a Codex CLI/config override only when selected. |
+| 3 | Codex native resolution | Project/profile/user/system/default configuration. |
+
+An explicit `--profile` or `-p` suppresses project model and project reasoning
+so the profile can resolve them; an explicit model or effort passed alongside a
+profile still wins for its own field. Equal duplicate explicit values collapse
+to one override; conflicting explicit values fail before Codex is executed.
+Model, reasoning, and profile wrapper arguments participate only before `--`.
+
+Yolo is an independent safety decision. `-d`, `--danger`, `--yolo`, or the
+native `--dangerously-bypass-approvals-and-sandbox` explicitly opt one launch
+in. Otherwise, only an effective project `yolo_mode = true` enables it. A
+project `false` or an absent value emits no dangerous flag; a profile never
+suppresses yolo. When enabled, the launch contains exactly one native dangerous
+flag. Persistent yolo applies only to `agents-infra codex` primary launches—it
+does not affect Claude, `task-board spawn`, task-board manifests, or child-run
+selection.
+
+Use the supported local setup surface to update a project without replacing
+MCP settings, unrelated TOML tables, comments, or unspecified primary fields:
+
+```bash
+agents-infra setup local /abs/path/to/project \
+  --codex-primary-model gpt-5.6-terra \
+  --codex-primary-reasoning-effort xhigh \
+  --codex-yolo-mode=false
+
+agents-infra setup local /abs/path/to/project \
+  --clear-codex-primary-session
+```
+
+No primary-session flags leave `project-config.toml` byte-identical. Set flags
+update only supplied fields, so `--codex-yolo-mode=false` is an explicit value;
+clear removes only `[agents.codex.primary_session]`. Clear cannot be combined
+with a set flag, all primary-session flags are local-only, and a target that
+resolves to `~/.agents/.configs/project-config.toml` is rejected. Validation or
+atomic-write failures preserve the original file. Supported Unix targets use an
+atomic rename; Windows uses
+[`atomic.ReplaceFile`](https://pkg.go.dev/github.com/natefinch/atomic#ReplaceFile)
+(`MoveFileExW` replace/write-through); unsupported replacement targets fail
+closed.
+
+Inspect an invocation without launching Codex:
+
+```bash
+cd /abs/path/to/project
+agents-infra codex --print-config
+agents-infra codex --print-config --profile fast
+agents-infra codex --print-config --model gpt-5.6-terra -c 'model_reasoning_effort="xhigh"'
+
+# Start an actual primary Codex session from the same project.
+agents-infra codex
+```
+
+`--print-config` prints every discovered project-config path; effective and
+project values with their sources; explicit-CLI/profile suppression state;
+wrapper yolo expansion; and the exact `codex_args` to be executed. It is the
+first diagnostic when a launch does not use the expected values.
+
+`doctor local` uses the same resolver for persistent configuration evidence:
 
 ```bash
 agents-infra doctor local /abs/path/to/project
 ```
 
-`codex_config_shadowing_global: true` means the project still has a local
-`.codex/config.toml` that overrides the global config. Remove it if unintended,
-or keep it as an explicit project-local override.
+For a configured project, its stable primary-session fields include:
+
+```text
+codex_primary_config_valid: true
+codex_primary_model: gpt-5.6-terra
+codex_primary_model_source: /abs/path/to/project/.agents/.configs/project-config.toml
+codex_primary_reasoning_effort: xhigh
+codex_primary_reasoning_effort_source: /abs/path/to/project/.agents/.configs/project-config.toml
+codex_primary_yolo_mode: false
+codex_primary_yolo_mode_source: /abs/path/to/project/.agents/.configs/project-config.toml
+```
+
+When model or effort is absent, doctor renders an empty value with source
+`native`; absent yolo renders `false` with source `default`. Invalid ancestor
+TOML makes doctor nonzero, reports the exact path and field, and sets
+`codex_primary_config_valid: false` without printing a partial policy.
+
+Existing `.codex/config.toml` behavior is unchanged: no automatic migration
+or deletion occurs, and local config remains an intentional Codex-native
+project layer. `codex_config_shadowing_global: true` means it overrides the
+global `~/.codex/config.toml`; use `--codex-config=global` to remove an
+unwanted local config, or `--codex-config=local` to install the managed local
+one. Project primary-session overrides and `.codex/config.toml` can coexist;
+use an explicit `--profile` when the profile should control model and effort.
+
+Troubleshooting:
+
+- Unexpected model or effort: run `agents-infra codex --print-config`; check
+  `effective_source`, `project_application`, an explicit `-c`/`--model`, and
+  profile suppression.
+- Unexpected danger flag: inspect `wrapper_expansions` and `yolo_mode`; set
+  the nearest project field explicitly to `false` to mask an inherited `true`.
+- Invalid configuration: use unquoted strings for model/effort and an unquoted
+  boolean for yolo; the launcher reports the source path and field.
+- Global model appears ignored: run `agents-infra doctor local PROJECT` and
+  resolve any `codex_config_shadowing_global: true` state deliberately.
+
+Task-board child spawn ceilings belong to the separate
+[task-board spawn-ceiling contract](https://github.com/relux-works/skill-project-management/blob/main/.specs/project-agent-selection-policy.md#task-board-spawn-ceiling-contract).
+Agents-infra neither reads nor validates that `task-board.config.json` policy;
+it owns only this primary-session TOML.
 
 ## Tooling
 
 | Tool | Purpose | Command | Outputs |
 |------|---------|---------|---------|
 | `./setup.sh` / `./setup.ps1` | Bootstrap the `agents-infra` CLI and sync the global runtime | `./setup.sh`, `.\setup.ps1` | `~/.local/bin/agents-infra`, `~/.agents/`, `~/.claude/`, `~/.codex/`, install-state metadata |
-| `agents-infra` | Set up or inspect global/project-local agent runtimes and launch Codex or Claude Code with project-local MCP opt-ins | `agents-infra setup global`, `agents-infra setup local /path/to/project`, `agents-infra doctor local /path/to/project`, `agents-infra codex --print-config`, `agents-infra claude --print-config` | Runtime directories under the target root; printed diagnostics on stdout |
+| `agents-infra` | Set up or inspect global/project-local agent runtimes; configure and launch the primary Codex session; launch Claude Code with project-local MCP opt-ins | `agents-infra setup global`, `agents-infra setup local /path/to/project --codex-primary-model MODEL --codex-primary-reasoning-effort EFFORT --codex-yolo-mode=true\|false`, `agents-infra setup local /path/to/project --clear-codex-primary-session`, `agents-infra doctor local /path/to/project`, `agents-infra codex --print-config`, `agents-infra claude --print-config` | Runtime directories under the target root; printed diagnostics on stdout |
 | `agents-attachments` | Resolve generic attachment manifests and stage image inputs for inspection | `agents-attachments list`, `agents-attachments path screenshot.png`, `agents-attachments stage-images ./photo.heic --out-dir .temp/image-intake` | `.temp/agents-attachments-manifest.json`, `.temp/agents-attachments/`, staged images and `image-stage-map.json` under caller-selected `.temp/` |
 | `python3` | Run the `agents-attachments` helper and its focused tests | `python3 -m py_compile .scripts/agents-attachments`, `python3 -m unittest tests/test_agents_attachments.py` | Python bytecode cache and task-scoped logs under `.temp/` |
 | `sips` / ImageMagick `magick` | Normalize HEIC/HEIF image inputs for staged inspection | `sips -s format png input.heic --out output.png`, `magick input.heic output.png` | Normalized staged images under caller-selected `.temp/` |

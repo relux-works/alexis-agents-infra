@@ -37,4 +37,3 @@ and extended only where needed.
 - installed helper smoke `agents-attachments stage-images ...` — pass (`.temp/TASK-260710-44ivjd/helper-smoke-stage-images-01.pretty.json`)
 - `git diff --check` — pass (`.temp/TASK-260710-44ivjd/git-diff-check-04.log`)
 - `task-board validate` — pass (`.temp/TASK-260710-44ivjd/task-board-validate-01.log`)
-

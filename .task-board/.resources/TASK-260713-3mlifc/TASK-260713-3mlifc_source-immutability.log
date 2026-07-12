@@ -1,0 +1,26 @@
+TASK-260713-3mlifc source immutability handoff evidence
+
+Initial snapshot comparison:
+- Not stable because concurrent tracked tasks changed shared working trees.
+- TASK-260713-2qfcpb wrote Terra/xhigh spawn ceilings to both source
+  task-board.config.json files at 2026-07-13T15:56:19+0300.
+- TASK-260713-1ripj2 changed infra instructions/logbook during this run.
+- Concurrent setup/build work refreshed task-board binaries in the
+  skill-project-management checkout.
+
+Post-concurrency handoff comparison:
+- PASS: complete relux-agents-infra non-.git/non-.temp/non-.task-board file
+  manifest stable.
+- PASS: relux-agents-infra task-board.config.json hash stable.
+- PASS: relux-agents-infra git diff --check.
+- PASS: skill-project-management source-only manifest stable after excluding
+  concurrently rebuilt tools/board-cli/task-board,
+  tools/board-tui/task-board, tools/board-tui/task-board-tui, and
+  tools/board-server/board-server artifacts.
+- PASS: skill-project-management task-board.config.json hash stable.
+- PASS: skill-project-management git diff --check.
+
+Every mutating validation command targeted only
+/tmp/TASK-260713-3mlifc-primary-session/copies/*, which resolves into the
+task-scoped .temp directory. Disposable target task-board.config.json files
+were byte-identical before/after each 117-assertion matrix.

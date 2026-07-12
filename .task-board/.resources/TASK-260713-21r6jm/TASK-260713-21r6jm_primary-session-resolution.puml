@@ -1,0 +1,47 @@
+@startuml
+!theme plain
+
+title agents-infra Primary Codex Session Resolution
+
+|agents-infra discovery|
+start
+:Walk ancestor directories root to leaf;
+:Parse each .agents/.configs/project-config.toml;
+if (Any invalid file?) then (yes)
+  :Return path + field error;
+  stop
+endif
+:Compose model, effort, yolo per field;
+note right
+  Nearest present value wins.
+  Explicit false overrides inherited true.
+end note
+
+|CLI normalizer|
+:Parse wrapper and explicit Codex arguments;
+if (Conflicting explicit value?) then (yes)
+  :Fail before exec;
+  stop
+endif
+if (Explicit --profile?) then (yes)
+  :Suppress project model and effort;
+else (no)
+  :Fill unpinned model/effort from project;
+endif
+:Leave remaining dimensions Codex-native;
+
+if (Explicit yolo or effective yolo=true?) then (yes)
+  :Emit exactly one native dangerous flag;
+else (no)
+  :Emit no dangerous flag;
+endif
+
+|Evidence or launch|
+if (--print-config?) then (yes)
+  :Render values, provenance, suppression, argv;
+  stop
+endif
+:Launch Codex with final argv;
+stop
+
+@enduml

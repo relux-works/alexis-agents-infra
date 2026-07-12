@@ -1,0 +1,711 @@
+fixture: /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.agents/.configs/project-config.toml
+# TASK-260713-3mlifc: setup preservation fixture for skill-project-management
+[mcp]
+enabled_servers = ["figma"]
+
+[custom.validation]
+owner = "TASK-260713-3mlifc"
+target = "skill-project-management"
+
+$ env HOME=/tmp/TASK-260713-3mlifc-primary-session/home/skill-project-management /tmp/TASK-260713-3mlifc-primary-session/bin/agents-infra setup local /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management --source-dir /tmp/TASK-260713-3mlifc-primary-session/runtime-source
+Synced source repo into /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.agents
+Installed git metadata already absent from /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.agents
+Removed existing managed path: /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.codex/AGENTS.md
+Rendered Codex instructions: /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.codex/AGENTS.md
+Removed existing managed path: /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/AGENTS.md
+Rendered Codex instructions: /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/AGENTS.md
+Skipped project-local Codex config so global config remains authoritative
+Codex local MCP launcher already up to date: /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.local/bin/codex-local
+CLI launcher already up to date: /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.local/bin/agents-infra
+[exit=0]
+
+$ env HOME=/tmp/TASK-260713-3mlifc-primary-session/home/skill-project-management /tmp/TASK-260713-3mlifc-primary-session/bin/agents-infra setup local /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management --source-dir /tmp/TASK-260713-3mlifc-primary-session/runtime-source --no-sync --codex-primary-model primary-parent-skill-project-management --codex-primary-reasoning-effort high --codex-yolo-mode=true
+Installed git metadata already absent from /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.agents
+Removed existing managed path: /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.codex/AGENTS.md
+Rendered Codex instructions: /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.codex/AGENTS.md
+Removed existing managed path: /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/AGENTS.md
+Rendered Codex instructions: /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/AGENTS.md
+Skipped project-local Codex config so global config remains authoritative
+Codex local MCP launcher already up to date: /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.local/bin/codex-local
+CLI launcher already up to date: /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.local/bin/agents-infra
+Updated Codex primary session in /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.agents/.configs/project-config.toml
+[exit=0]
+
+$ env HOME=/tmp/TASK-260713-3mlifc-primary-session/home/skill-project-management /tmp/TASK-260713-3mlifc-primary-session/bin/agents-infra setup local /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management --source-dir /tmp/TASK-260713-3mlifc-primary-session/runtime-source --no-sync --codex-primary-reasoning-effort xhigh --codex-yolo-mode=false
+Installed git metadata already absent from /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.agents
+Removed existing managed path: /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.codex/AGENTS.md
+Rendered Codex instructions: /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.codex/AGENTS.md
+Removed existing managed path: /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/AGENTS.md
+Rendered Codex instructions: /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/AGENTS.md
+Skipped project-local Codex config so global config remains authoritative
+Codex local MCP launcher already up to date: /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.local/bin/codex-local
+CLI launcher already up to date: /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.local/bin/agents-infra
+Updated Codex primary session in /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.agents/.configs/project-config.toml
+[exit=0]
+
+$ env HOME=/tmp/TASK-260713-3mlifc-primary-session/home/skill-project-management /tmp/TASK-260713-3mlifc-primary-session/bin/agents-infra setup local /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management --source-dir /tmp/TASK-260713-3mlifc-primary-session/runtime-source --no-sync --clear-codex-primary-session
+Installed git metadata already absent from /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.agents
+Removed existing managed path: /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.codex/AGENTS.md
+Rendered Codex instructions: /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.codex/AGENTS.md
+Removed existing managed path: /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/AGENTS.md
+Rendered Codex instructions: /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/AGENTS.md
+Skipped project-local Codex config so global config remains authoritative
+Codex local MCP launcher already up to date: /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.local/bin/codex-local
+CLI launcher already up to date: /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.local/bin/agents-infra
+Cleared Codex primary session from /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.agents/.configs/project-config.toml
+[exit=0]
+
+$ env HOME=/tmp/TASK-260713-3mlifc-primary-session/home/skill-project-management /tmp/TASK-260713-3mlifc-primary-session/bin/agents-infra setup local /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management --source-dir /tmp/TASK-260713-3mlifc-primary-session/runtime-source --no-sync --codex-primary-model primary-parent-skill-project-management --codex-primary-reasoning-effort high --codex-yolo-mode=true
+Installed git metadata already absent from /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.agents
+Removed existing managed path: /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.codex/AGENTS.md
+Rendered Codex instructions: /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.codex/AGENTS.md
+Removed existing managed path: /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/AGENTS.md
+Rendered Codex instructions: /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/AGENTS.md
+Skipped project-local Codex config so global config remains authoritative
+Codex local MCP launcher already up to date: /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.local/bin/codex-local
+CLI launcher already up to date: /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.local/bin/agents-infra
+Updated Codex primary session in /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.agents/.configs/project-config.toml
+[exit=0]
+
+fixture: /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.validation/TASK-260713-3mlifc/child/.agents/.configs/project-config.toml
+# TASK-260713-3mlifc: child composition fixture for skill-project-management
+[mcp]
+enabled_servers = ["safari"]
+
+[agents.codex.primary_session]
+reasoning_effort = "medium"
+yolo_mode = false
+
+$ env HOME=/tmp/TASK-260713-3mlifc-primary-session/home/skill-project-management AGENTS_INFRA_CALLER_CWD=/tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management /tmp/TASK-260713-3mlifc-primary-session/bin/agents-infra codex --print-config exec inspect
+agents-infra codex config
+cwd: /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management
+base_codex_config: /tmp/TASK-260713-3mlifc-primary-session/home/skill-project-management/.codex/config.toml (missing)
+project_configs:
+  - /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.agents/.configs/project-config.toml: enabled_mcp=figma
+primary_session:
+  model:
+    effective_value: "primary-parent-skill-project-management"
+    effective_source: /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.agents/.configs/project-config.toml
+    project_value: "primary-parent-skill-project-management"
+    project_source: /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.agents/.configs/project-config.toml
+    project_application: applied
+  reasoning_effort:
+    effective_value: "high"
+    effective_source: /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.agents/.configs/project-config.toml
+    project_value: "high"
+    project_source: /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.agents/.configs/project-config.toml
+    project_application: applied
+  yolo_mode:
+    effective_value: true
+    effective_source: /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.agents/.configs/project-config.toml
+    project_value: true
+    project_source: /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.agents/.configs/project-config.toml
+    project_application: applied
+mcp_registries:
+  - /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.agents/.configs/codex-mcp-servers.toml (project): servers=figma,lldb,safari
+enabled_mcp:
+  - figma
+    enabled_by: /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.agents/.configs/project-config.toml
+    definition: /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.agents/.configs/codex-mcp-servers.toml
+    url: https://mcp.figma.com/mcp
+wrapper_expansions:
+  - (none)
+codex_args:
+  - "-c"
+  - "mcp_servers.figma.url=\"https://mcp.figma.com/mcp\""
+  - "--model"
+  - "primary-parent-skill-project-management"
+  - "-c"
+  - "model_reasoning_effort=\"high\""
+  - "--dangerously-bypass-approvals-and-sandbox"
+  - "exec"
+  - "inspect"
+[exit=0]
+
+$ env HOME=/tmp/TASK-260713-3mlifc-primary-session/home/skill-project-management AGENTS_INFRA_CALLER_CWD=/tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.validation/TASK-260713-3mlifc/child /tmp/TASK-260713-3mlifc-primary-session/bin/agents-infra codex --print-config exec inspect
+agents-infra codex config
+cwd: /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.validation/TASK-260713-3mlifc/child
+base_codex_config: /tmp/TASK-260713-3mlifc-primary-session/home/skill-project-management/.codex/config.toml (missing)
+project_configs:
+  - /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.agents/.configs/project-config.toml: enabled_mcp=figma
+  - /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.validation/TASK-260713-3mlifc/child/.agents/.configs/project-config.toml: enabled_mcp=safari
+primary_session:
+  model:
+    effective_value: "primary-parent-skill-project-management"
+    effective_source: /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.agents/.configs/project-config.toml
+    project_value: "primary-parent-skill-project-management"
+    project_source: /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.agents/.configs/project-config.toml
+    project_application: applied
+  reasoning_effort:
+    effective_value: "medium"
+    effective_source: /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.validation/TASK-260713-3mlifc/child/.agents/.configs/project-config.toml
+    project_value: "medium"
+    project_source: /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.validation/TASK-260713-3mlifc/child/.agents/.configs/project-config.toml
+    project_application: applied
+  yolo_mode:
+    effective_value: false
+    effective_source: /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.validation/TASK-260713-3mlifc/child/.agents/.configs/project-config.toml
+    project_value: false
+    project_source: /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.validation/TASK-260713-3mlifc/child/.agents/.configs/project-config.toml
+    project_application: applied
+mcp_registries:
+  - /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.agents/.configs/codex-mcp-servers.toml (project): servers=figma,lldb,safari
+enabled_mcp:
+  - figma
+    enabled_by: /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.agents/.configs/project-config.toml
+    definition: /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.agents/.configs/codex-mcp-servers.toml
+    url: https://mcp.figma.com/mcp
+  - safari
+    enabled_by: /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.validation/TASK-260713-3mlifc/child/.agents/.configs/project-config.toml
+    definition: /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.agents/.configs/codex-mcp-servers.toml
+    command: /Applications/Safari Technology Preview.app/Contents/MacOS/safaridriver
+    args: ["--mcp"]
+wrapper_expansions:
+  - (none)
+codex_args:
+  - "-c"
+  - "mcp_servers.figma.url=\"https://mcp.figma.com/mcp\""
+  - "-c"
+  - "mcp_servers.safari.command=\"/Applications/Safari Technology Preview.app/Contents/MacOS/safaridriver\""
+  - "-c"
+  - "mcp_servers.safari.args=[\"--mcp\"]"
+  - "--model"
+  - "primary-parent-skill-project-management"
+  - "-c"
+  - "model_reasoning_effort=\"medium\""
+  - "exec"
+  - "inspect"
+[exit=0]
+
+$ env HOME=/tmp/TASK-260713-3mlifc-primary-session/home/skill-project-management /tmp/TASK-260713-3mlifc-primary-session/bin/agents-infra doctor local /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.validation/TASK-260713-3mlifc/child
+mode: local
+agents_dir: /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.validation/TASK-260713-3mlifc/child/.agents
+claude_dir: /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.validation/TASK-260713-3mlifc/child/.claude
+codex_dir: /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.validation/TASK-260713-3mlifc/child/.codex
+bin_dir: /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.validation/TASK-260713-3mlifc/child/.local/bin
+git_free: true
+claude_linked: false
+codex_linked: false
+codex_rendered: false
+codex_project_rendered: false
+codex_config_present: false
+codex_config_linked: false
+codex_config_generated: false
+codex_config_effective: global
+codex_mcp_enabled: figma,safari
+codex_config_shadowing_global: false
+codex_primary_config_valid: true
+codex_primary_model: primary-parent-skill-project-management
+codex_primary_model_source: /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.agents/.configs/project-config.toml
+codex_primary_reasoning_effort: medium
+codex_primary_reasoning_effort_source: /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.validation/TASK-260713-3mlifc/child/.agents/.configs/project-config.toml
+codex_primary_yolo_mode: false
+codex_primary_yolo_mode_source: /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.validation/TASK-260713-3mlifc/child/.agents/.configs/project-config.toml
+helpers_linked: false
+infra_skill_link: false
+[exit=0]
+
+$ env HOME=/tmp/TASK-260713-3mlifc-primary-session/home/skill-project-management AGENTS_INFRA_CALLER_CWD=/tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management /tmp/TASK-260713-3mlifc-primary-session/bin/agents-infra codex --print-config -d --danger --yolo --dangerously-bypass-approvals-and-sandbox exec inspect
+agents-infra codex config
+cwd: /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management
+base_codex_config: /tmp/TASK-260713-3mlifc-primary-session/home/skill-project-management/.codex/config.toml (missing)
+project_configs:
+  - /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.agents/.configs/project-config.toml: enabled_mcp=figma
+primary_session:
+  model:
+    effective_value: "primary-parent-skill-project-management"
+    effective_source: /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.agents/.configs/project-config.toml
+    project_value: "primary-parent-skill-project-management"
+    project_source: /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.agents/.configs/project-config.toml
+    project_application: applied
+  reasoning_effort:
+    effective_value: "high"
+    effective_source: /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.agents/.configs/project-config.toml
+    project_value: "high"
+    project_source: /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.agents/.configs/project-config.toml
+    project_application: applied
+  yolo_mode:
+    effective_value: true
+    effective_source: wrapper:-d
+    project_value: true
+    project_source: /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.agents/.configs/project-config.toml
+    project_application: suppressed_by_explicit_cli
+mcp_registries:
+  - /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.agents/.configs/codex-mcp-servers.toml (project): servers=figma,lldb,safari
+enabled_mcp:
+  - figma
+    enabled_by: /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.agents/.configs/project-config.toml
+    definition: /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.agents/.configs/codex-mcp-servers.toml
+    url: https://mcp.figma.com/mcp
+wrapper_expansions:
+  - -d => --dangerously-bypass-approvals-and-sandbox
+  - --danger => --dangerously-bypass-approvals-and-sandbox
+  - --yolo => --dangerously-bypass-approvals-and-sandbox
+codex_args:
+  - "-c"
+  - "mcp_servers.figma.url=\"https://mcp.figma.com/mcp\""
+  - "--model"
+  - "primary-parent-skill-project-management"
+  - "-c"
+  - "model_reasoning_effort=\"high\""
+  - "--dangerously-bypass-approvals-and-sandbox"
+  - "exec"
+  - "inspect"
+[exit=0]
+
+$ env HOME=/tmp/TASK-260713-3mlifc-primary-session/home/skill-project-management AGENTS_INFRA_CALLER_CWD=/tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.validation/TASK-260713-3mlifc/child /tmp/TASK-260713-3mlifc-primary-session/bin/agents-infra codex --print-config --danger exec inspect
+agents-infra codex config
+cwd: /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.validation/TASK-260713-3mlifc/child
+base_codex_config: /tmp/TASK-260713-3mlifc-primary-session/home/skill-project-management/.codex/config.toml (missing)
+project_configs:
+  - /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.agents/.configs/project-config.toml: enabled_mcp=figma
+  - /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.validation/TASK-260713-3mlifc/child/.agents/.configs/project-config.toml: enabled_mcp=safari
+primary_session:
+  model:
+    effective_value: "primary-parent-skill-project-management"
+    effective_source: /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.agents/.configs/project-config.toml
+    project_value: "primary-parent-skill-project-management"
+    project_source: /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.agents/.configs/project-config.toml
+    project_application: applied
+  reasoning_effort:
+    effective_value: "medium"
+    effective_source: /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.validation/TASK-260713-3mlifc/child/.agents/.configs/project-config.toml
+    project_value: "medium"
+    project_source: /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.validation/TASK-260713-3mlifc/child/.agents/.configs/project-config.toml
+    project_application: applied
+  yolo_mode:
+    effective_value: true
+    effective_source: wrapper:--danger
+    project_value: false
+    project_source: /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.validation/TASK-260713-3mlifc/child/.agents/.configs/project-config.toml
+    project_application: suppressed_by_explicit_cli
+mcp_registries:
+  - /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.agents/.configs/codex-mcp-servers.toml (project): servers=figma,lldb,safari
+enabled_mcp:
+  - figma
+    enabled_by: /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.agents/.configs/project-config.toml
+    definition: /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.agents/.configs/codex-mcp-servers.toml
+    url: https://mcp.figma.com/mcp
+  - safari
+    enabled_by: /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.validation/TASK-260713-3mlifc/child/.agents/.configs/project-config.toml
+    definition: /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.agents/.configs/codex-mcp-servers.toml
+    command: /Applications/Safari Technology Preview.app/Contents/MacOS/safaridriver
+    args: ["--mcp"]
+wrapper_expansions:
+  - --danger => --dangerously-bypass-approvals-and-sandbox
+codex_args:
+  - "-c"
+  - "mcp_servers.figma.url=\"https://mcp.figma.com/mcp\""
+  - "-c"
+  - "mcp_servers.safari.command=\"/Applications/Safari Technology Preview.app/Contents/MacOS/safaridriver\""
+  - "-c"
+  - "mcp_servers.safari.args=[\"--mcp\"]"
+  - "--model"
+  - "primary-parent-skill-project-management"
+  - "-c"
+  - "model_reasoning_effort=\"medium\""
+  - "--dangerously-bypass-approvals-and-sandbox"
+  - "exec"
+  - "inspect"
+[exit=0]
+
+$ env HOME=/tmp/TASK-260713-3mlifc-primary-session/home/skill-project-management AGENTS_INFRA_CALLER_CWD=/tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.validation/TASK-260713-3mlifc/child /tmp/TASK-260713-3mlifc-primary-session/bin/agents-infra codex --print-config --profile fast exec inspect
+agents-infra codex config
+cwd: /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.validation/TASK-260713-3mlifc/child
+base_codex_config: /tmp/TASK-260713-3mlifc-primary-session/home/skill-project-management/.codex/config.toml (missing)
+project_configs:
+  - /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.agents/.configs/project-config.toml: enabled_mcp=figma
+  - /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.validation/TASK-260713-3mlifc/child/.agents/.configs/project-config.toml: enabled_mcp=safari
+primary_session:
+  model:
+    effective_value: (codex-native)
+    effective_source: cli:--profile
+    project_value: "primary-parent-skill-project-management"
+    project_source: /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.agents/.configs/project-config.toml
+    project_application: suppressed_by_explicit_profile
+  reasoning_effort:
+    effective_value: (codex-native)
+    effective_source: cli:--profile
+    project_value: "medium"
+    project_source: /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.validation/TASK-260713-3mlifc/child/.agents/.configs/project-config.toml
+    project_application: suppressed_by_explicit_profile
+  yolo_mode:
+    effective_value: false
+    effective_source: /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.validation/TASK-260713-3mlifc/child/.agents/.configs/project-config.toml
+    project_value: false
+    project_source: /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.validation/TASK-260713-3mlifc/child/.agents/.configs/project-config.toml
+    project_application: applied
+mcp_registries:
+  - /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.agents/.configs/codex-mcp-servers.toml (project): servers=figma,lldb,safari
+enabled_mcp:
+  - figma
+    enabled_by: /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.agents/.configs/project-config.toml
+    definition: /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.agents/.configs/codex-mcp-servers.toml
+    url: https://mcp.figma.com/mcp
+  - safari
+    enabled_by: /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.validation/TASK-260713-3mlifc/child/.agents/.configs/project-config.toml
+    definition: /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.agents/.configs/codex-mcp-servers.toml
+    command: /Applications/Safari Technology Preview.app/Contents/MacOS/safaridriver
+    args: ["--mcp"]
+wrapper_expansions:
+  - (none)
+codex_args:
+  - "-c"
+  - "mcp_servers.figma.url=\"https://mcp.figma.com/mcp\""
+  - "-c"
+  - "mcp_servers.safari.command=\"/Applications/Safari Technology Preview.app/Contents/MacOS/safaridriver\""
+  - "-c"
+  - "mcp_servers.safari.args=[\"--mcp\"]"
+  - "--profile"
+  - "fast"
+  - "exec"
+  - "inspect"
+[exit=0]
+
+$ env HOME=/tmp/TASK-260713-3mlifc-primary-session/home/skill-project-management AGENTS_INFRA_CALLER_CWD=/tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management /tmp/TASK-260713-3mlifc-primary-session/bin/agents-infra codex --print-config --profile fast exec inspect
+agents-infra codex config
+cwd: /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management
+base_codex_config: /tmp/TASK-260713-3mlifc-primary-session/home/skill-project-management/.codex/config.toml (missing)
+project_configs:
+  - /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.agents/.configs/project-config.toml: enabled_mcp=figma
+primary_session:
+  model:
+    effective_value: (codex-native)
+    effective_source: cli:--profile
+    project_value: "primary-parent-skill-project-management"
+    project_source: /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.agents/.configs/project-config.toml
+    project_application: suppressed_by_explicit_profile
+  reasoning_effort:
+    effective_value: (codex-native)
+    effective_source: cli:--profile
+    project_value: "high"
+    project_source: /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.agents/.configs/project-config.toml
+    project_application: suppressed_by_explicit_profile
+  yolo_mode:
+    effective_value: true
+    effective_source: /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.agents/.configs/project-config.toml
+    project_value: true
+    project_source: /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.agents/.configs/project-config.toml
+    project_application: applied
+mcp_registries:
+  - /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.agents/.configs/codex-mcp-servers.toml (project): servers=figma,lldb,safari
+enabled_mcp:
+  - figma
+    enabled_by: /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.agents/.configs/project-config.toml
+    definition: /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.agents/.configs/codex-mcp-servers.toml
+    url: https://mcp.figma.com/mcp
+wrapper_expansions:
+  - (none)
+codex_args:
+  - "-c"
+  - "mcp_servers.figma.url=\"https://mcp.figma.com/mcp\""
+  - "--dangerously-bypass-approvals-and-sandbox"
+  - "--profile"
+  - "fast"
+  - "exec"
+  - "inspect"
+[exit=0]
+
+$ env HOME=/tmp/TASK-260713-3mlifc-primary-session/home/skill-project-management AGENTS_INFRA_CALLER_CWD=/tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.validation/TASK-260713-3mlifc/child /tmp/TASK-260713-3mlifc-primary-session/bin/agents-infra codex --print-config -c model=\"primary-cli-skill-project-management\" -c model_reasoning_effort=\"low\" --profile fast exec inspect
+agents-infra codex config
+cwd: /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.validation/TASK-260713-3mlifc/child
+base_codex_config: /tmp/TASK-260713-3mlifc-primary-session/home/skill-project-management/.codex/config.toml (missing)
+project_configs:
+  - /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.agents/.configs/project-config.toml: enabled_mcp=figma
+  - /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.validation/TASK-260713-3mlifc/child/.agents/.configs/project-config.toml: enabled_mcp=safari
+primary_session:
+  model:
+    effective_value: "primary-cli-skill-project-management"
+    effective_source: cli:-c model
+    project_value: "primary-parent-skill-project-management"
+    project_source: /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.agents/.configs/project-config.toml
+    project_application: suppressed_by_explicit_cli
+  reasoning_effort:
+    effective_value: "low"
+    effective_source: cli:-c model_reasoning_effort
+    project_value: "medium"
+    project_source: /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.validation/TASK-260713-3mlifc/child/.agents/.configs/project-config.toml
+    project_application: suppressed_by_explicit_cli
+  yolo_mode:
+    effective_value: false
+    effective_source: /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.validation/TASK-260713-3mlifc/child/.agents/.configs/project-config.toml
+    project_value: false
+    project_source: /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.validation/TASK-260713-3mlifc/child/.agents/.configs/project-config.toml
+    project_application: applied
+mcp_registries:
+  - /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.agents/.configs/codex-mcp-servers.toml (project): servers=figma,lldb,safari
+enabled_mcp:
+  - figma
+    enabled_by: /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.agents/.configs/project-config.toml
+    definition: /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.agents/.configs/codex-mcp-servers.toml
+    url: https://mcp.figma.com/mcp
+  - safari
+    enabled_by: /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.validation/TASK-260713-3mlifc/child/.agents/.configs/project-config.toml
+    definition: /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.agents/.configs/codex-mcp-servers.toml
+    command: /Applications/Safari Technology Preview.app/Contents/MacOS/safaridriver
+    args: ["--mcp"]
+wrapper_expansions:
+  - (none)
+codex_args:
+  - "-c"
+  - "mcp_servers.figma.url=\"https://mcp.figma.com/mcp\""
+  - "-c"
+  - "mcp_servers.safari.command=\"/Applications/Safari Technology Preview.app/Contents/MacOS/safaridriver\""
+  - "-c"
+  - "mcp_servers.safari.args=[\"--mcp\"]"
+  - "-c"
+  - "model=\"primary-cli-skill-project-management\""
+  - "-c"
+  - "model_reasoning_effort=\"low\""
+  - "--profile"
+  - "fast"
+  - "exec"
+  - "inspect"
+[exit=0]
+
+$ env HOME=/tmp/TASK-260713-3mlifc-primary-session/home/skill-project-management AGENTS_INFRA_CALLER_CWD=/tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.validation/TASK-260713-3mlifc/child /tmp/TASK-260713-3mlifc-primary-session/bin/agents-infra codex --print-config --model=primary-duplicate-skill-project-management -m=primary-duplicate-skill-project-management -c=model=\'primary-duplicate-skill-project-management\' --config=model_reasoning_effort=\'high\' -c=model_reasoning_effort=\"high\" exec inspect
+agents-infra codex config
+cwd: /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.validation/TASK-260713-3mlifc/child
+base_codex_config: /tmp/TASK-260713-3mlifc-primary-session/home/skill-project-management/.codex/config.toml (missing)
+project_configs:
+  - /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.agents/.configs/project-config.toml: enabled_mcp=figma
+  - /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.validation/TASK-260713-3mlifc/child/.agents/.configs/project-config.toml: enabled_mcp=safari
+primary_session:
+  model:
+    effective_value: "primary-duplicate-skill-project-management"
+    effective_source: cli:--model
+    project_value: "primary-parent-skill-project-management"
+    project_source: /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.agents/.configs/project-config.toml
+    project_application: suppressed_by_explicit_cli
+  reasoning_effort:
+    effective_value: "high"
+    effective_source: cli:--config model_reasoning_effort
+    project_value: "medium"
+    project_source: /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.validation/TASK-260713-3mlifc/child/.agents/.configs/project-config.toml
+    project_application: suppressed_by_explicit_cli
+  yolo_mode:
+    effective_value: false
+    effective_source: /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.validation/TASK-260713-3mlifc/child/.agents/.configs/project-config.toml
+    project_value: false
+    project_source: /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.validation/TASK-260713-3mlifc/child/.agents/.configs/project-config.toml
+    project_application: applied
+mcp_registries:
+  - /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.agents/.configs/codex-mcp-servers.toml (project): servers=figma,lldb,safari
+enabled_mcp:
+  - figma
+    enabled_by: /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.agents/.configs/project-config.toml
+    definition: /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.agents/.configs/codex-mcp-servers.toml
+    url: https://mcp.figma.com/mcp
+  - safari
+    enabled_by: /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.validation/TASK-260713-3mlifc/child/.agents/.configs/project-config.toml
+    definition: /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.agents/.configs/codex-mcp-servers.toml
+    command: /Applications/Safari Technology Preview.app/Contents/MacOS/safaridriver
+    args: ["--mcp"]
+wrapper_expansions:
+  - (none)
+codex_args:
+  - "-c"
+  - "mcp_servers.figma.url=\"https://mcp.figma.com/mcp\""
+  - "-c"
+  - "mcp_servers.safari.command=\"/Applications/Safari Technology Preview.app/Contents/MacOS/safaridriver\""
+  - "-c"
+  - "mcp_servers.safari.args=[\"--mcp\"]"
+  - "--model=primary-duplicate-skill-project-management"
+  - "--config=model_reasoning_effort='high'"
+  - "exec"
+  - "inspect"
+[exit=0]
+
+$ env HOME=/tmp/TASK-260713-3mlifc-primary-session/home/skill-project-management AGENTS_INFRA_CALLER_CWD=/tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.validation/TASK-260713-3mlifc/child /tmp/TASK-260713-3mlifc-primary-session/bin/agents-infra codex --print-config --model first -m second
+conflicting explicit Codex values for field model: "first" and "second"
+[exit=1]
+
+$ env HOME=/tmp/TASK-260713-3mlifc-primary-session/home/skill-project-management AGENTS_INFRA_CALLER_CWD=/tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.validation/TASK-260713-3mlifc/child /tmp/TASK-260713-3mlifc-primary-session/bin/agents-infra codex --print-config -c model_reasoning_effort=\"high\" --config model_reasoning_effort=\"medium\"
+conflicting explicit Codex values for field model_reasoning_effort: "\"high\"" and "\"medium\""
+[exit=1]
+
+$ env HOME=/tmp/TASK-260713-3mlifc-primary-session/home/skill-project-management AGENTS_INFRA_CALLER_CWD=/tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.validation/TASK-260713-3mlifc/child /tmp/TASK-260713-3mlifc-primary-session/bin/agents-infra codex --print-config exec invalid
+/tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.validation/TASK-260713-3mlifc/child/.agents/.configs/project-config.toml: field agents.codex.primary_session.yolo_mode: expected boolean, got string
+[exit=1]
+
+$ env HOME=/tmp/TASK-260713-3mlifc-primary-session/home/skill-project-management /tmp/TASK-260713-3mlifc-primary-session/bin/agents-infra doctor local /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.validation/TASK-260713-3mlifc/child
+mode: local
+agents_dir: /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.validation/TASK-260713-3mlifc/child/.agents
+claude_dir: /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.validation/TASK-260713-3mlifc/child/.claude
+codex_dir: /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.validation/TASK-260713-3mlifc/child/.codex
+bin_dir: /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.validation/TASK-260713-3mlifc/child/.local/bin
+git_free: true
+claude_linked: false
+codex_linked: false
+codex_rendered: false
+codex_project_rendered: false
+codex_config_present: false
+codex_config_linked: false
+codex_config_generated: false
+codex_config_effective: global
+codex_mcp_enabled:
+codex_config_shadowing_global: false
+codex_primary_config_valid: false
+helpers_linked: false
+infra_skill_link: false
+/tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.validation/TASK-260713-3mlifc/child/.agents/.configs/project-config.toml: field agents.codex.primary_session.yolo_mode: expected boolean, got string
+[exit=1]
+
+$ env HOME=/tmp/TASK-260713-3mlifc-primary-session/home/skill-project-management AGENTS_INFRA_CALLER_CWD=/tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.validation/TASK-260713-3mlifc/child PATH=/tmp/TASK-260713-3mlifc-primary-session/fake-bin:/opt/homebrew/lib/node_modules/@openai/codex/node_modules/@openai/codex-darwin-arm64/vendor/aarch64-apple-darwin/codex-path:/opt/homebrew/lib/node_modules/@openai/codex/node_modules/@openai/codex-darwin-arm64/vendor/aarch64-apple-darwin/codex-path:/Users/alexis/.codex/tmp/arg0/codex-arg0q8PQxk:/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home/bin:/usr/local/bin:/System/Cryptexes/App/usr/bin:/usr/bin:/bin:/usr/sbin:/sbin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/local/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin:/pkg/env/global/bin:/Library/Apple/usr/bin:/opt/homebrew/bin:/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home/bin:/Users/alexis/.local/bin:/opt/homebrew/opt/ruby/bin:/Users/alexis/.rvm/bin:/Users/alexis/.lmstudio/bin FAKE_CODEX_SENTINEL=/Users/alexis/src/relux-works/relux-agents-infra/.temp/TASK-260713-3mlifc/results/skill-project-management/invalid-launch-sentinel.log /tmp/TASK-260713-3mlifc-primary-session/bin/agents-infra codex exec invalid
+/tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.validation/TASK-260713-3mlifc/child/.agents/.configs/project-config.toml: field agents.codex.primary_session.yolo_mode: expected boolean, got string
+[exit=1]
+
+$ env HOME=/tmp/TASK-260713-3mlifc-primary-session/home/skill-project-management /tmp/TASK-260713-3mlifc-primary-session/bin/agents-infra setup local /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.validation/TASK-260713-3mlifc/child --source-dir /tmp/TASK-260713-3mlifc-primary-session/runtime-source --no-sync --codex-primary-model should-not-write
+/tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.validation/TASK-260713-3mlifc/child/.agents/.configs/project-config.toml: field agents.codex.primary_session.yolo_mode: expected boolean, got string
+[exit=1]
+
+$ env HOME=/tmp/TASK-260713-3mlifc-primary-session/home/skill-project-management AGENTS_INFRA_CALLER_CWD=/tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management /tmp/TASK-260713-3mlifc-primary-session/bin/agents-infra codex --print-config exec native
+agents-infra codex config
+cwd: /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management
+base_codex_config: /tmp/TASK-260713-3mlifc-primary-session/home/skill-project-management/.codex/config.toml (missing)
+project_configs:
+  - (none)
+primary_session:
+  model:
+    effective_value: (codex-native)
+    effective_source: native
+    project_value: (absent)
+    project_source: (none)
+    project_application: not_configured
+  reasoning_effort:
+    effective_value: (codex-native)
+    effective_source: native
+    project_value: (absent)
+    project_source: (none)
+    project_application: not_configured
+  yolo_mode:
+    effective_value: false
+    effective_source: default
+    project_value: (absent)
+    project_source: (none)
+    project_application: not_configured
+mcp_registries:
+  - /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.agents/.configs/codex-mcp-servers.toml (project): servers=figma,lldb,safari
+enabled_mcp:
+  - (none)
+wrapper_expansions:
+  - (none)
+codex_args:
+  - "exec"
+  - "native"
+[exit=0]
+
+fixture: /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.validation/TASK-260713-3mlifc/task-board-policy-only/task-board.config.json
+{
+  "mode": "local",
+  "local": {"board_dir": ".task-board"},
+  "spawn": {
+    "max_parallel": 7,
+    "ceilings": {
+      "codex": {
+        "model": "task-board-only-skill-project-management",
+        "reasoning_effort": "max"
+      }
+    }
+  }
+}
+
+$ env HOME=/tmp/TASK-260713-3mlifc-primary-session/home/skill-project-management AGENTS_INFRA_CALLER_CWD=/tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.validation/TASK-260713-3mlifc/task-board-policy-only /tmp/TASK-260713-3mlifc-primary-session/bin/agents-infra codex --print-config exec policy-only
+agents-infra codex config
+cwd: /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.validation/TASK-260713-3mlifc/task-board-policy-only
+base_codex_config: /tmp/TASK-260713-3mlifc-primary-session/home/skill-project-management/.codex/config.toml (missing)
+project_configs:
+  - (none)
+primary_session:
+  model:
+    effective_value: (codex-native)
+    effective_source: native
+    project_value: (absent)
+    project_source: (none)
+    project_application: not_configured
+  reasoning_effort:
+    effective_value: (codex-native)
+    effective_source: native
+    project_value: (absent)
+    project_source: (none)
+    project_application: not_configured
+  yolo_mode:
+    effective_value: false
+    effective_source: default
+    project_value: (absent)
+    project_source: (none)
+    project_application: not_configured
+mcp_registries:
+  - /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.agents/.configs/codex-mcp-servers.toml (project): servers=figma,lldb,safari
+enabled_mcp:
+  - (none)
+wrapper_expansions:
+  - (none)
+codex_args:
+  - "exec"
+  - "policy-only"
+[exit=0]
+
+$ env HOME=/tmp/TASK-260713-3mlifc-primary-session/home/skill-project-management /tmp/TASK-260713-3mlifc-primary-session/bin/agents-infra doctor local /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management
+mode: local
+agents_dir: /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.agents
+claude_dir: /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.claude
+codex_dir: /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.codex
+bin_dir: /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.local/bin
+git_free: true
+claude_linked: true
+codex_linked: false
+codex_rendered: true
+codex_project_rendered: true
+codex_config_present: false
+codex_config_linked: false
+codex_config_generated: false
+codex_config_effective: global
+codex_mcp_enabled:
+codex_config_shadowing_global: false
+codex_primary_config_valid: true
+codex_primary_model:
+codex_primary_model_source: native
+codex_primary_reasoning_effort:
+codex_primary_reasoning_effort_source: native
+codex_primary_yolo_mode: false
+codex_primary_yolo_mode_source: default
+helpers_linked: true
+infra_skill_link: true
+[exit=0]
+
+$ env HOME=/tmp/TASK-260713-3mlifc-primary-session/home/skill-project-management AGENTS_INFRA_CALLER_CWD=/tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management PATH=/tmp/TASK-260713-3mlifc-primary-session/fake-bin:/opt/homebrew/lib/node_modules/@openai/codex/node_modules/@openai/codex-darwin-arm64/vendor/aarch64-apple-darwin/codex-path:/opt/homebrew/lib/node_modules/@openai/codex/node_modules/@openai/codex-darwin-arm64/vendor/aarch64-apple-darwin/codex-path:/Users/alexis/.codex/tmp/arg0/codex-arg0q8PQxk:/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home/bin:/usr/local/bin:/System/Cryptexes/App/usr/bin:/usr/bin:/bin:/usr/sbin:/sbin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/local/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin:/pkg/env/global/bin:/Library/Apple/usr/bin:/opt/homebrew/bin:/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home/bin:/Users/alexis/.local/bin:/opt/homebrew/opt/ruby/bin:/Users/alexis/.rvm/bin:/Users/alexis/.lmstudio/bin FAKE_CODEX_SENTINEL=/Users/alexis/src/relux-works/relux-agents-infra/.temp/TASK-260713-3mlifc/results/skill-project-management/native-launch-argv.log /tmp/TASK-260713-3mlifc-primary-session/bin/agents-infra codex exec native
+agents-infra codex config
+cwd: /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management
+base_codex_config: /tmp/TASK-260713-3mlifc-primary-session/home/skill-project-management/.codex/config.toml (missing)
+project_configs:
+  - (none)
+primary_session:
+  model:
+    effective_value: (codex-native)
+    effective_source: native
+    project_value: (absent)
+    project_source: (none)
+    project_application: not_configured
+  reasoning_effort:
+    effective_value: (codex-native)
+    effective_source: native
+    project_value: (absent)
+    project_source: (none)
+    project_application: not_configured
+  yolo_mode:
+    effective_value: false
+    effective_source: default
+    project_value: (absent)
+    project_source: (none)
+    project_application: not_configured
+mcp_registries:
+  - /tmp/TASK-260713-3mlifc-primary-session/copies/skill-project-management/.agents/.configs/codex-mcp-servers.toml (project): servers=figma,lldb,safari
+enabled_mcp:
+  - (none)
+wrapper_expansions:
+  - (none)
+codex_args:
+  - "exec"
+  - "native"
+[exit=0]

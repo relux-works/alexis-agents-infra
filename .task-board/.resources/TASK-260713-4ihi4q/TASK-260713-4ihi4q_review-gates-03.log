@@ -1,0 +1,43 @@
+TASK-260713-4ihi4q reviewer cycle 3 gates — 2026-07-13
+
+Scope/platform inspection
+- Repository is a Go CLI with macOS/Linux bootstrap and supported Windows bootstrap via setup.ps1.
+- Reviewed the local-setup mutation, CLI flags, source-sync exclusion, platform replacement helpers, focused tests, README, and dependency source.
+
+Independent commands
+- go test ./internal/infra -run 'Test(SetupLocal|SetupGlobal|RenderPrimarySession|ProjectConfig|PreparedProjectConfig|ReplaceProjectConfig)' -count=1 -v: PASS
+- go test . -run 'TestRunSetup' -count=1 -v: PASS
+- go test ./... -count=1: PASS
+- go test -race ./... -count=1: PASS
+- go vet ./...: PASS
+- go test ./... -count=1 -coverprofile=...: PASS; internal/infra 80.6%, main 58.7%
+- go mod verify: PASS
+- go mod tidy -diff: PASS (empty diff)
+- gofmt -l .: PASS (empty output)
+- go build ./...: PASS (darwin/arm64 host)
+- GOOS=linux GOARCH=amd64 go build ./...: PASS
+- GOOS=windows GOARCH=amd64 go build ./...: PASS
+- GOOS=windows GOARCH=arm64 go build ./...: PASS
+- GOOS=windows GOARCH=amd64 go test -c ./internal/infra: PASS
+- GOOS=windows GOARCH=arm64 go test -c ./internal/infra: PASS
+- git diff --check: PASS
+- task-board validate: PASS
+- Negative ownership search for spawn ceilings/ranks/manifests under tools/agents-infra: PASS (no matches)
+- Shared .configs/project-config.toml template search outside .temp: PASS (none)
+
+Windows replacement review
+- project_config_replace_windows.go delegates to github.com/natefinch/atomic.ReplaceFile.
+- Inspected v1.0.1 source: MoveFileExW with REPLACE_EXISTING (0x1) and WRITE_THROUGH (0x8); package contract guarantees all-or-nothing replacement.
+- Caller stages and syncs the temporary file in the destination directory before replacement.
+- Generic injected replacement-failure test preserves destination bytes and removes the temporary file.
+- Windows-only tests cover successful replacement and a delete-locked failure preserving both files; amd64 and arm64 test binaries compile.
+- A Windows runtime was not available locally; this is not claimed as runtime execution evidence.
+
+Producer evidence inspected
+- TASK-260713-4ihi4q_windows-atomic-rework-logs.tar.gz contains focused/full/race/vet/build logs and both target-repository smokes.
+- relux-agents-infra no-flag project-config hash: 2b6806fa698d649d00036e4c45fd3933ba35fbc8af4286663f785c94ecb95bbc.
+- skill-project-management no-flag project-config hash: 28d3edb9e9a56995fdf93bc425baded0dcdbc520c23e868adb1a4ece61b23716.
+- Both smokes retain MCP/unrelated content, explicit false, omitted fields, custom .codex/config.toml, diagnostics provenance, and clear semantics.
+- Source status before and after smoke is identical.
+
+Verdict: ACCEPTED. No code changes made by reviewer.
