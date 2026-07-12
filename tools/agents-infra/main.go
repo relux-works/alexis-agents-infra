@@ -40,6 +40,8 @@ func run(args []string) error {
 		return runDoctor(args[1:])
 	case "codex":
 		return runCodex(args[1:])
+	case "claude":
+		return runClaude(args[1:])
 	case "version", "--version":
 		return runVersion()
 	case "help", "-h", "--help":
@@ -179,6 +181,28 @@ func runCodex(args []string) error {
 	return cmd.Run()
 }
 
+func runClaude(args []string) error {
+	plan, err := infra.BuildClaudeLaunchPlan(os.Getenv(callerCWDEnv), "", args)
+	if err != nil {
+		return err
+	}
+	rendered := infra.RenderClaudeLaunchPlan(plan)
+	if plan.PrintConfig {
+		fmt.Fprint(os.Stdout, rendered)
+		return nil
+	}
+	fmt.Fprint(os.Stderr, rendered)
+	claudePath, err := exec.LookPath("claude")
+	if err != nil {
+		return fmt.Errorf("find claude executable: %w", err)
+	}
+	cmd := exec.Command(claudePath, plan.Args...)
+	cmd.Stdin = os.Stdin
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	return cmd.Run()
+}
+
 func runVersion() error {
 	fmt.Fprintf(os.Stdout, "agents-infra %s commit=%s build_date=%s\n", Version, Commit, BuildDate)
 	return nil
@@ -232,5 +256,6 @@ func usageText() string {
   agents-infra refresh-links --agents-dir DIR --claude-dir DIR --codex-dir DIR --bin-dir DIR [--mode global|local] [--codex-config preserve|global|local]
   agents-infra doctor global [--home-dir DIR]
   agents-infra doctor local [PROJECT_DIR] [--project-dir DIR]
-  agents-infra codex [--print-config] [-d|--danger|--yolo] [--] [CODEX_ARGS...]`
+  agents-infra codex [--print-config] [-d|--danger|--yolo] [--] [CODEX_ARGS...]
+  agents-infra claude [--print-config] [-d|--danger|--yolo] [--] [CLAUDE_ARGS...]`
 }
