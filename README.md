@@ -42,6 +42,7 @@ The canonical interface after bootstrap is:
 - `agents-infra setup local [PATH]`
 - `agents-infra doctor global|local`
 - `agents-infra codex [--print-config] [-d] [CODEX_ARGS...]`
+- `agents-infra claude [--print-config] [-d] [CLAUDE_ARGS...]`
 - `agents-infra version`
 
 Setup syncs the repo into `.agents`, treats `.skills/` as the authoritative
@@ -94,7 +95,7 @@ or keep it as an explicit project-local override.
 | Tool | Purpose | Command | Outputs |
 |------|---------|---------|---------|
 | `./setup.sh` / `./setup.ps1` | Bootstrap the `agents-infra` CLI and sync the global runtime | `./setup.sh`, `.\setup.ps1` | `~/.local/bin/agents-infra`, `~/.agents/`, `~/.claude/`, `~/.codex/`, install-state metadata |
-| `agents-infra` | Set up or inspect global/project-local agent runtimes and launch Codex with project-local MCP opt-ins | `agents-infra setup global`, `agents-infra setup local /path/to/project`, `agents-infra doctor local /path/to/project`, `agents-infra codex --print-config` | Runtime directories under the target root; printed diagnostics on stdout |
+| `agents-infra` | Set up or inspect global/project-local agent runtimes and launch Codex or Claude Code with project-local MCP opt-ins | `agents-infra setup global`, `agents-infra setup local /path/to/project`, `agents-infra doctor local /path/to/project`, `agents-infra codex --print-config`, `agents-infra claude --print-config` | Runtime directories under the target root; printed diagnostics on stdout |
 | `go` | Build, test, and vet the Go CLI in `tools/agents-infra` | `cd tools/agents-infra && go test ./...`, `cd tools/agents-infra && go vet ./...` | Go test cache; task-scoped logs should be written under `.temp/` |
 | `task-board` | Track project work, checklist state, and outcome resources | `task-board q --format compact 'get(TASK-ID) { full }'`, `task-board m 'set_status(TASK-ID, status=development)'` | `.task-board/` and `.task-board/.resources/` |
 | `git` | Inspect repo state and validate diff hygiene | `git status --short`, `git diff --check` | No repo artifact; task-scoped command logs should be written under `.temp/` |
@@ -278,24 +279,28 @@ Reference config with:
 - Enforce global config with `agents-infra setup local /path/to/project --codex-config=global`.
 - `agents-infra doctor local` reports `codex_config_shadowing_global: true` when a project-local `.codex/config.toml` is overriding the global config.
 
-### Project-Local Codex MCP Opt-In
+### Project-Local MCP Opt-In (Codex + Claude Code)
 
-Agents-infra does not enable MCP servers in the global Codex config by default.
-Projects opt in explicitly through `.agents/.configs/project-config.toml`:
+Agents-infra does not enable MCP servers in the global Codex or Claude Code
+config by default. Projects opt in explicitly through a single,
+agent-agnostic list in `.agents/.configs/project-config.toml`:
 
 ```toml
-[codex.mcp]
+[mcp]
 enabled_servers = ["figma"]
 ```
 
-Known MCP server definitions live in `.configs/codex-mcp-servers.toml` and are
-synced into project runtimes. Definitions can describe streamable HTTP servers
-with `url` or stdio servers with `command` and optional `args`. Start Codex
-through `agents-infra codex` from inside the project tree. The launcher walks
-upward from the current directory, composes every discovered
+There is one list per project, not one per agent — `enabled_servers` decides
+which servers are available regardless of whether you launch Codex or Claude
+Code. Known MCP server definitions live in `.configs/codex-mcp-servers.toml`
+and are synced into project runtimes. Definitions can describe streamable
+HTTP servers with `url` or stdio servers with `command` and optional `args`.
+
+Start Codex through `agents-infra codex` from inside the project tree. The
+launcher walks upward from the current directory, composes every discovered
 `.agents/.configs/project-config.toml`, resolves enabled MCP definitions from
 project registries plus the global registry, logs where each part came from,
-then starts Codex with the resulting `-c` overrides.
+then starts Codex with the resulting `-c` overrides:
 
 ```bash
 agents-infra codex
@@ -304,10 +309,32 @@ agents-infra codex exec "check the Figma node"
 agents-infra codex --print-config
 ```
 
+Start Claude Code the same way through `agents-infra claude` — same
+`enabled_servers` list, same registries, same ancestor walk — but rendered as
+a single Claude Code `--mcp-config` JSON payload instead of Codex `-c`
+overrides (streamable HTTP servers become `{"type":"http","url":...}`, with
+`bearer_token_env_var` mapped to an `Authorization: Bearer ${VAR}` header for
+Claude Code to expand at launch; stdio servers become
+`{"type":"stdio","command":...,"args":[...]}`). That payload is added on top
+of whatever MCP servers are already configured at the user/project level —
+the launcher does not pass `--strict-mcp-config`, so existing `.mcp.json` /
+`claude mcp add` servers keep working unchanged:
+
+```bash
+agents-infra claude
+agents-infra claude -d
+agents-infra claude --print-config
+```
+
+`-d` expands to Codex `--dangerously-bypass-approvals-and-sandbox` or Claude
+Code `--dangerously-skip-permissions` respectively. If no project opt-in is
+found while walking upward, neither launcher mounts anything — no `-c`
+overrides for Codex, no `--mcp-config` flag for Claude Code.
+
 LLDB MCP is available as an opt-in stdio server:
 
 ```toml
-[codex.mcp]
+[mcp]
 enabled_servers = ["lldb"]
 ```
 
@@ -332,7 +359,7 @@ Safari MCP is available as an opt-in stdio server backed by Safari Technology
 Preview's `safaridriver`:
 
 ```toml
-[codex.mcp]
+[mcp]
 enabled_servers = ["safari"]
 ```
 
@@ -350,20 +377,19 @@ Prerequisites:
 - Enable `Safari Settings > Advanced > Show features for web developers`.
 - Enable `Safari Settings > Developer > Enable remote automation and external agents`.
 
-Safari remains project-local opt-in only. Do not add it to a global Codex MCP
-config unless the user explicitly wants a user-managed global server.
+Safari remains project-local opt-in only. Do not add it to a global Codex or
+Claude Code MCP config unless the user explicitly wants a user-managed global
+server.
 
-`-d` expands to Codex `--dangerously-bypass-approvals-and-sandbox`. During
-`agents-infra setup local`, a non-empty `enabled_servers` list also installs
-`.local/bin/codex-local` as a backward-compatible shim that delegates to
-`agents-infra codex`. The project-local `agents-infra` helper preserves the
+During `agents-infra setup local`, a non-empty `enabled_servers` list also
+installs `.local/bin/codex-local` as a backward-compatible shim that delegates
+to `agents-infra codex`. The project-local `agents-infra` helper preserves the
 caller's working directory before it runs the source checkout with `go run`, so
 `codex-local --print-config` should report the directory where the user invoked
 it, not `.agents/tools/agents-infra`.
 
-If no project config is found while walking upward, agents-infra does not mount
-an MCP server just because it exists in a registry. User-managed global MCP
-servers in the base Codex config remain Codex's responsibility, not
+User-managed global MCP servers in the base Codex config, or in Claude Code's
+own user/project scopes, remain that agent's own responsibility, not
 agents-infra project opt-in state. The global Codex model/settings config
 remains authoritative.
 

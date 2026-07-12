@@ -44,13 +44,19 @@ Supported shared MCP server definitions:
 Project opt-in example:
 
 ```toml
-[codex.mcp]
+[mcp]
 enabled_servers = ["figma", "lldb", "safari"]
 ```
 
-Start Codex through `agents-infra codex` from inside the project tree so the
-project-local MCP registry and enablement are composed into Codex `-c`
-overrides.
+`enabled_servers` is one agent-agnostic list per project — there is a single
+source of truth for which MCP servers a project opts into, not a separate
+list per agent. Start Codex through `agents-infra codex` (or the personal
+`codexD` shell alias for full-trust `-d` mode) so this list and the shared
+registry are composed into Codex `-c` overrides. Start Claude Code the same
+way through `agents-infra claude` (or `claudeD`) so the same list and
+registry are composed into a Claude Code `--mcp-config` payload instead.
+Both launchers read the exact same `enabled_servers` list — enabling a
+server enables it for whichever agent you launch.
 
 ---
 
