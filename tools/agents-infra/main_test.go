@@ -15,7 +15,7 @@ func TestRunCodexPrintConfigUsesCallerCWDEnv(t *testing.T) {
 	appDir := filepath.Join(project, "apps", "mobile", "app")
 	mustMkdir(t, appDir)
 	mustMkdir(t, filepath.Join(appDir, ".agents", ".configs"))
-	mustWrite(t, filepath.Join(appDir, ".agents", ".configs", "project-config.toml"), "[codex.mcp]\nenabled_servers = [\"figma\"]\n")
+	mustWrite(t, filepath.Join(appDir, ".agents", ".configs", "project-config.toml"), "[mcp]\nenabled_servers = [\"figma\"]\n")
 	mustWrite(t, filepath.Join(appDir, ".agents", ".configs", "codex-mcp-servers.toml"), "[servers.figma]\nurl = \"https://mcp.figma.com/mcp\"\n")
 
 	t.Setenv("HOME", home)
@@ -47,7 +47,7 @@ func TestRunCodexPrintConfigEmitsSafariMCPCommandAndArgs(t *testing.T) {
 	safariCommand := "/Applications/Safari Technology Preview.app/Contents/MacOS/safaridriver"
 	mustMkdir(t, appDir)
 	mustMkdir(t, filepath.Join(appDir, ".agents", ".configs"))
-	mustWrite(t, filepath.Join(appDir, ".agents", ".configs", "project-config.toml"), "[codex.mcp]\nenabled_servers = [\"safari\"]\n")
+	mustWrite(t, filepath.Join(appDir, ".agents", ".configs", "project-config.toml"), "[mcp]\nenabled_servers = [\"safari\"]\n")
 	mustWrite(t, filepath.Join(appDir, ".agents", ".configs", "codex-mcp-servers.toml"), "[servers.safari]\ncommand = \""+safariCommand+"\"\nargs = [\"--mcp\"]\n")
 
 	t.Setenv("HOME", home)

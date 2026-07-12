@@ -17,10 +17,10 @@ func TestBuildCodexLaunchPlanComposesAncestorConfigsAndProvenance(t *testing.T) 
 	mustMkdir(t, filepath.Join(home, ".agents", ".configs"))
 	mustWrite(t, filepath.Join(home, ".agents", ".configs", "codex-mcp-servers.toml"), "[servers.figma]\nurl = \"https://global.example/figma\"\n")
 	mustMkdir(t, filepath.Join(parent, ".agents", ".configs"))
-	mustWrite(t, filepath.Join(parent, ".agents", ".configs", "project-config.toml"), "[codex.mcp]\nenabled_servers = [\"figma\"]\n")
+	mustWrite(t, filepath.Join(parent, ".agents", ".configs", "project-config.toml"), "[mcp]\nenabled_servers = [\"figma\"]\n")
 	mustWrite(t, filepath.Join(parent, ".agents", ".configs", "codex-mcp-servers.toml"), "[servers.figma]\nurl = \"https://parent.example/figma\"\n")
 	mustMkdir(t, filepath.Join(child, ".agents", ".configs"))
-	mustWrite(t, filepath.Join(child, ".agents", ".configs", "project-config.toml"), "[codex.mcp]\nenabled_servers = [\"jira\", \"figma\"]\n")
+	mustWrite(t, filepath.Join(child, ".agents", ".configs", "project-config.toml"), "[mcp]\nenabled_servers = [\"jira\", \"figma\"]\n")
 	mustWrite(t, filepath.Join(child, ".agents", ".configs", "codex-mcp-servers.toml"), "[servers.jira]\nurl = \"https://child.example/jira\"\nbearer_token_env_var = \"JIRA_TOKEN\"\n")
 
 	plan, err := BuildCodexLaunchPlan(child, home, []string{"-d", "-"})
@@ -73,7 +73,7 @@ func TestBuildCodexLaunchPlanIgnoresHomeAgentsProjectConfigWithoutProjectOptIn(t
 	mustMkdir(t, start)
 	mustMkdir(t, filepath.Join(home, ".agents", ".configs"))
 	mustWrite(t, filepath.Join(home, ".agents", ".configs", "codex-mcp-servers.toml"), "[servers.figma]\nurl = \"https://global.example/figma\"\n")
-	mustWrite(t, filepath.Join(home, ".agents", ".configs", "project-config.toml"), "[codex.mcp]\nenabled_servers = [\"figma\"]\n")
+	mustWrite(t, filepath.Join(home, ".agents", ".configs", "project-config.toml"), "[mcp]\nenabled_servers = [\"figma\"]\n")
 
 	plan, err := BuildCodexLaunchPlan(start, home, []string{"exec", "hello"})
 	if err != nil {
@@ -97,7 +97,7 @@ func TestBuildCodexLaunchPlanSupportsStdioMCPServers(t *testing.T) {
 	mustMkdir(t, filepath.Join(home, ".agents", ".configs"))
 	mustWrite(t, filepath.Join(home, ".agents", ".configs", "codex-mcp-servers.toml"), "[servers.lldb]\ncommand = \"lldb-mcp\"\nargs = [\"--socket\", \"auto\"]\n")
 	mustMkdir(t, filepath.Join(start, ".agents", ".configs"))
-	mustWrite(t, filepath.Join(start, ".agents", ".configs", "project-config.toml"), "[codex.mcp]\nenabled_servers = [\"lldb\"]\n")
+	mustWrite(t, filepath.Join(start, ".agents", ".configs", "project-config.toml"), "[mcp]\nenabled_servers = [\"lldb\"]\n")
 
 	plan, err := BuildCodexLaunchPlan(start, home, nil)
 	if err != nil {
@@ -148,7 +148,7 @@ func TestBuildCodexLaunchPlanSupportsSafariMCPOptIn(t *testing.T) {
 	}
 
 	mustMkdir(t, filepath.Join(start, ".agents", ".configs"))
-	mustWrite(t, filepath.Join(start, ".agents", ".configs", "project-config.toml"), "[codex.mcp]\nenabled_servers = [\"safari\"]\n")
+	mustWrite(t, filepath.Join(start, ".agents", ".configs", "project-config.toml"), "[mcp]\nenabled_servers = [\"safari\"]\n")
 
 	plan, err := BuildCodexLaunchPlan(start, home, nil)
 	if err != nil {
@@ -209,7 +209,7 @@ func TestBuildCodexLaunchPlanFailsOnUnknownEnabledMCP(t *testing.T) {
 	start := t.TempDir()
 	mustMkdir(t, filepath.Join(start, ".agents", ".configs"))
 	projectConfig := filepath.Join(start, ".agents", ".configs", "project-config.toml")
-	mustWrite(t, projectConfig, "[codex.mcp]\nenabled_servers = [\"missing\"]\n")
+	mustWrite(t, projectConfig, "[mcp]\nenabled_servers = [\"missing\"]\n")
 
 	_, err := BuildCodexLaunchPlan(start, home, nil)
 	if err == nil {

@@ -95,7 +95,7 @@ func BuildCodexLaunchPlan(startDir, homeDir string, args []string) (CodexLaunchP
 
 	ancestors := ancestorDirsRootFirst(startDir)
 	globalProjectConfigPath := filepath.Join(homeDir, ".agents", ".configs", projectConfigFileName)
-	enabledOrder, enabledBy, projectConfigs, err := loadCompositeMCPEnablement(ancestors, globalProjectConfigPath)
+	enabledOrder, enabledBy, projectConfigs, err := loadCompositeMCPEnablement(ancestors, globalProjectConfigPath, "mcp")
 	if err != nil {
 		return CodexLaunchPlan{}, err
 	}
@@ -306,7 +306,7 @@ func ancestorDirsRootFirst(startDir string) []string {
 	return rootFirst
 }
 
-func loadCompositeMCPEnablement(ancestors []string, globalProjectConfigPath string) ([]string, map[string][]string, []CodexProjectConfigSource, error) {
+func loadCompositeMCPEnablement(ancestors []string, globalProjectConfigPath, section string) ([]string, map[string][]string, []CodexProjectConfigSource, error) {
 	var enabledOrder []string
 	enabledSeen := map[string]bool{}
 	enabledBy := map[string][]string{}
@@ -324,7 +324,7 @@ func loadCompositeMCPEnablement(ancestors []string, globalProjectConfigPath stri
 		if err != nil {
 			return nil, nil, nil, fmt.Errorf("read project config %s: %w", path, err)
 		}
-		servers, err := parseEnabledMCPServers(data, path)
+		servers, err := parseEnabledMCPServers(data, path, section)
 		if err != nil {
 			return nil, nil, nil, err
 		}

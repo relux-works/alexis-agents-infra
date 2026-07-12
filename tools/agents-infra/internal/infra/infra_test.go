@@ -241,7 +241,7 @@ func TestSetupGlobalRemovesStaleProjectConfig(t *testing.T) {
 	}
 	staleConfig := filepath.Join(home, ".agents", ".configs", projectConfigFileName)
 	mustMkdir(t, filepath.Dir(staleConfig))
-	mustWrite(t, staleConfig, "[codex.mcp]\nenabled_servers = [\"figma\"]\n")
+	mustWrite(t, staleConfig, "[mcp]\nenabled_servers = [\"figma\"]\n")
 
 	if err := Setup(Options{Layout: layout}); err != nil {
 		t.Fatalf("Setup: %v", err)
@@ -334,7 +334,7 @@ func TestSetupLocalProjectMCPOptInInstallsCodexLocalLauncher(t *testing.T) {
 	source := seedSourceRepo(t)
 	project := t.TempDir()
 	mustMkdir(t, filepath.Join(project, ".agents", ".configs"))
-	mustWrite(t, filepath.Join(project, ".agents", ".configs", "project-config.toml"), "[codex.mcp]\nenabled_servers = [\"figma\"]\n")
+	mustWrite(t, filepath.Join(project, ".agents", ".configs", "project-config.toml"), "[mcp]\nenabled_servers = [\"figma\"]\n")
 	layout, err := LocalLayout(source, project)
 	if err != nil {
 		t.Fatalf("LocalLayout: %v", err)
@@ -406,7 +406,7 @@ func TestSetupLocalMCPOptInPreservesCustomCodexConfig(t *testing.T) {
 	project := t.TempDir()
 	mustMkdir(t, filepath.Join(project, ".agents", ".configs"))
 	mustMkdir(t, filepath.Join(project, ".codex"))
-	mustWrite(t, filepath.Join(project, ".agents", ".configs", "project-config.toml"), "[codex.mcp]\nenabled_servers = [\"figma\"]\n")
+	mustWrite(t, filepath.Join(project, ".agents", ".configs", "project-config.toml"), "[mcp]\nenabled_servers = [\"figma\"]\n")
 	mustWrite(t, filepath.Join(project, ".codex", "config.toml"), "model = \"custom\"\n")
 	layout, err := LocalLayout(source, project)
 	if err != nil {
@@ -433,7 +433,7 @@ func TestSetupLocalUnknownMCPOptInDefersValidationToLaunchTime(t *testing.T) {
 	source := seedSourceRepo(t)
 	project := t.TempDir()
 	mustMkdir(t, filepath.Join(project, ".agents", ".configs"))
-	mustWrite(t, filepath.Join(project, ".agents", ".configs", "project-config.toml"), "[codex.mcp]\nenabled_servers = [\"missing\"]\n")
+	mustWrite(t, filepath.Join(project, ".agents", ".configs", "project-config.toml"), "[mcp]\nenabled_servers = [\"missing\"]\n")
 	layout, err := LocalLayout(source, project)
 	if err != nil {
 		t.Fatalf("LocalLayout: %v", err)

@@ -627,10 +627,10 @@ func projectEnabledMCPServers(layout Layout) ([]string, error) {
 	if err != nil {
 		return nil, fmt.Errorf("read project config %s: %w", path, err)
 	}
-	return parseEnabledMCPServers(data, path)
+	return parseEnabledMCPServers(data, path, "mcp")
 }
 
-func parseEnabledMCPServers(data []byte, path string) ([]string, error) {
+func parseEnabledMCPServers(data []byte, path, wantSection string) ([]string, error) {
 	var section string
 	for lineNo, rawLine := range strings.Split(string(data), "\n") {
 		line := strings.TrimSpace(rawLine)
@@ -641,7 +641,7 @@ func parseEnabledMCPServers(data []byte, path string) ([]string, error) {
 			section = strings.TrimSpace(strings.TrimSuffix(strings.TrimPrefix(line, "["), "]"))
 			continue
 		}
-		if section != "codex.mcp" {
+		if section != wantSection {
 			continue
 		}
 		key, value, ok := strings.Cut(line, "=")
