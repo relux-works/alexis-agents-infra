@@ -30,14 +30,15 @@ func (setup CodexPrimarySessionSetup) requested() bool {
 }
 
 // ClaudePrimarySessionSetup describes an explicit setup-local mutation for the
-// Claude-only primary-session model policy.
+// Claude primary-session policy.
 type ClaudePrimarySessionSetup struct {
-	Model *string
-	Clear bool
+	Model    *string
+	YoloMode *bool
+	Clear    bool
 }
 
 func (setup ClaudePrimarySessionSetup) requested() bool {
-	return setup.Clear || setup.Model != nil
+	return setup.Clear || setup.Model != nil || setup.YoloMode != nil
 }
 
 type projectConfigAtomicWriter func(path string, data []byte, mode fs.FileMode) error
@@ -118,7 +119,7 @@ func preparePrimarySessionSetup(
 	if codexSetup.ReasoningEffort != nil && strings.TrimSpace(*codexSetup.ReasoningEffort) == "" {
 		return nil, projectConfigFieldError(path, codexPrimaryReasoningEffortField, fmt.Errorf("supplied value must be a non-empty string"))
 	}
-	if claudeSetup.Clear && claudeSetup.Model != nil {
+	if claudeSetup.Clear && (claudeSetup.Model != nil || claudeSetup.YoloMode != nil) {
 		return nil, projectConfigFieldError(
 			path,
 			claudePrimarySessionField,
@@ -327,7 +328,7 @@ func codexPrimarySessionSourcePresent(source CodexPrimarySessionSource) bool {
 }
 
 func claudePrimarySessionSourcePresent(source ClaudePrimarySessionSource) bool {
-	return source.Model != nil
+	return source.Model != nil || source.YoloMode != nil
 }
 
 type textSpan struct {
@@ -358,7 +359,7 @@ func locateClaudePrimarySessionTable(data []byte) (primarySessionTableLocation, 
 	return locatePrimarySessionTable(
 		data,
 		[]string{"agents", "claude", "primary_session"},
-		map[string]bool{"model": true},
+		map[string]bool{"model": true, "yolo_mode": true},
 	)
 }
 
@@ -538,34 +539,50 @@ func updateClaudePrimarySessionTable(
 	location primarySessionTableLocation,
 	setup ClaudePrimarySessionSetup,
 ) ([]byte, error) {
-	if setup.Model == nil || (current.Model != nil && *current.Model == *setup.Model) {
+	var edits []textEdit
+	missing := ClaudePrimarySessionSetup{}
+	if setup.Model != nil && (current.Model == nil || *current.Model != *setup.Model) {
+		if field, ok := location.fields["model"]; ok {
+			value, err := encodeProjectConfigString(*setup.Model)
+			if err != nil {
+				return nil, projectConfigFieldError(path, claudePrimaryModelField, err)
+			}
+			edits = append(edits, textEdit{span: field.value, replacement: value})
+		} else if current.Model != nil {
+			return nil, projectConfigFieldError(path, claudePrimaryModelField, fmt.Errorf("field is not directly editable in the explicit table"))
+		} else {
+			missing.Model = setup.Model
+		}
+	}
+	if setup.YoloMode != nil && (current.YoloMode == nil || *current.YoloMode != *setup.YoloMode) {
+		if field, ok := location.fields["yolo_mode"]; ok {
+			edits = append(edits, textEdit{span: field.value, replacement: []byte(strconv.FormatBool(*setup.YoloMode))})
+		} else if current.YoloMode != nil {
+			return nil, projectConfigFieldError(path, claudePrimaryYoloModeField, fmt.Errorf("field is not directly editable in the explicit table"))
+		} else {
+			missing.YoloMode = setup.YoloMode
+		}
+	}
+	if !missing.requested() && len(edits) == 0 {
 		return append([]byte(nil), data...), nil
 	}
-	if field, ok := location.fields["model"]; ok {
-		value, err := encodeProjectConfigString(*setup.Model)
-		if err != nil {
-			return nil, projectConfigFieldError(path, claudePrimaryModelField, err)
-		}
-		return applyTextEdits(data, []textEdit{{span: field.value, replacement: value}})
-	}
-	if current.Model != nil {
-		return nil, projectConfigFieldError(path, claudePrimaryModelField, fmt.Errorf("field is not directly editable in the explicit table"))
-	}
-
 	insertAt := location.header.end
 	for _, field := range location.fields {
 		if field.line.end > insertAt {
 			insertAt = field.line.end
 		}
 	}
-	body, err := renderClaudePrimarySessionFields(setup, detectProjectConfigNewline(data))
-	if err != nil {
-		return nil, projectConfigFieldError(path, claudePrimarySessionField, err)
+	if missing.requested() {
+		body, err := renderClaudePrimarySessionFields(missing, detectProjectConfigNewline(data))
+		if err != nil {
+			return nil, projectConfigFieldError(path, claudePrimarySessionField, err)
+		}
+		if insertAt > 0 && data[insertAt-1] != '\n' {
+			body = append([]byte(detectProjectConfigNewline(data)), body...)
+		}
+		edits = append(edits, textEdit{span: textSpan{start: insertAt, end: insertAt}, replacement: body})
 	}
-	if insertAt > 0 && data[insertAt-1] != '\n' {
-		body = append([]byte(detectProjectConfigNewline(data)), body...)
-	}
-	return applyTextEdits(data, []textEdit{{span: textSpan{start: insertAt, end: insertAt}, replacement: body}})
+	return applyTextEdits(data, edits)
 }
 
 func appendCodexPrimarySessionTable(data []byte, setup CodexPrimarySessionSetup) ([]byte, error) {
@@ -629,14 +646,21 @@ func renderCodexPrimarySessionFields(setup CodexPrimarySessionSetup, newline str
 }
 
 func renderClaudePrimarySessionFields(setup ClaudePrimarySessionSetup, newline string) ([]byte, error) {
-	if setup.Model == nil {
-		return nil, fmt.Errorf("model is required when rendering a Claude primary-session table")
+	var body strings.Builder
+	if setup.Model != nil {
+		value, err := encodeProjectConfigString(*setup.Model)
+		if err != nil {
+			return nil, err
+		}
+		fmt.Fprintf(&body, "model = %s%s", value, newline)
 	}
-	value, err := encodeProjectConfigString(*setup.Model)
-	if err != nil {
-		return nil, err
+	if setup.YoloMode != nil {
+		fmt.Fprintf(&body, "yolo_mode = %s%s", strconv.FormatBool(*setup.YoloMode), newline)
 	}
-	return []byte(fmt.Sprintf("model = %s%s", value, newline)), nil
+	if body.Len() == 0 {
+		return nil, fmt.Errorf("at least one Claude primary-session field is required when rendering a table")
+	}
+	return []byte(body.String()), nil
 }
 
 func encodeProjectConfigString(value string) ([]byte, error) {

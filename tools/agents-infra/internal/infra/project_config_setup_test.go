@@ -694,6 +694,7 @@ yolo_mode = true
 
 [agents.claude.primary_session] # keep Claude comment
 model = "claude-old" # keep Claude model comment
+yolo_mode = true # keep Claude yolo comment
 
 [unrelated]
 owner = "preserve"
@@ -705,9 +706,10 @@ owner = "preserve"
 		t.Fatalf("LocalLayout: %v", err)
 	}
 	model := "claude-opus-4-6"
+	yolo := false
 	if err := Setup(Options{
 		Layout:                    layout,
-		ClaudePrimarySessionSetup: ClaudePrimarySessionSetup{Model: &model},
+		ClaudePrimarySessionSetup: ClaudePrimarySessionSetup{Model: &model, YoloMode: &yolo},
 	}); err != nil {
 		t.Fatalf("Setup: %v", err)
 	}
@@ -725,6 +727,9 @@ owner = "preserve"
 	if !strings.Contains(updated, "model = 'claude-opus-4-6' # keep Claude model comment") {
 		t.Fatalf("Claude model was not updated in place:\n%s", updated)
 	}
+	if !strings.Contains(updated, "yolo_mode = false # keep Claude yolo comment") {
+		t.Fatalf("Claude explicit false was not updated in place:\n%s", updated)
+	}
 	parsed, err := parseProjectConfig([]byte(updated), path)
 	if err != nil {
 		t.Fatalf("parseProjectConfig(updated): %v", err)
@@ -734,6 +739,38 @@ owner = "preserve"
 	}
 	if parsed.ClaudePrimarySession.Model == nil || *parsed.ClaudePrimarySession.Model != model {
 		t.Fatalf("Claude policy = %#v, want %q", parsed.ClaudePrimarySession, model)
+	}
+	if parsed.ClaudePrimarySession.YoloMode == nil || *parsed.ClaudePrimarySession.YoloMode {
+		t.Fatalf("Claude yolo policy = %#v, want explicit false", parsed.ClaudePrimarySession.YoloMode)
+	}
+}
+
+func TestSetupLocalCreatesClaudeYoloOnlyPrimarySession(t *testing.T) {
+	source := seedSourceRepo(t)
+	project := t.TempDir()
+	layout, err := LocalLayout(source, project)
+	if err != nil {
+		t.Fatalf("LocalLayout: %v", err)
+	}
+	yolo := true
+	if err := Setup(Options{
+		Layout:                    layout,
+		ClaudePrimarySessionSetup: ClaudePrimarySessionSetup{YoloMode: &yolo},
+	}); err != nil {
+		t.Fatalf("Setup: %v", err)
+	}
+
+	path := filepath.Join(project, ".agents", ".configs", projectConfigFileName)
+	updated := readFileString(t, path)
+	if !strings.Contains(updated, "[agents.claude.primary_session]\nyolo_mode = true") {
+		t.Fatalf("created Claude yolo policy missing from config:\n%s", updated)
+	}
+	parsed, err := parseProjectConfig([]byte(updated), path)
+	if err != nil {
+		t.Fatalf("parseProjectConfig(updated): %v", err)
+	}
+	if parsed.ClaudePrimarySession.Model != nil || parsed.ClaudePrimarySession.YoloMode == nil || !*parsed.ClaudePrimarySession.YoloMode {
+		t.Fatalf("Claude policy = %#v, want yolo-only true", parsed.ClaudePrimarySession)
 	}
 }
 
@@ -751,6 +788,7 @@ yolo_mode = true
 
 [agents.claude.primary_session]
 model = "claude-opus-4-6"
+yolo_mode = true
 # preserved user comment from cleared table
 
 [unrelated]
@@ -770,7 +808,10 @@ keep = "yes"
 	}
 
 	updated := readFileString(t, path)
-	for _, removed := range []string{"[agents.claude.primary_session]", "model = \"claude-opus-4-6\""} {
+	for _, removed := range []string{
+		"[agents.claude.primary_session]",
+		"model = \"claude-opus-4-6\"\nyolo_mode = true",
+	} {
 		if strings.Contains(updated, removed) {
 			t.Fatalf("clear left %q behind:\n%s", removed, updated)
 		}
@@ -805,6 +846,7 @@ func TestSetupLocalRejectsInvalidClaudePrimarySessionFlagsBeforeWrite(t *testing
 	}{
 		{name: "empty model", setup: ClaudePrimarySessionSetup{Model: stringPointer("  ")}, wantField: claudePrimaryModelField},
 		{name: "clear conflicts with model", setup: ClaudePrimarySessionSetup{Clear: true, Model: stringPointer("claude-opus-4-6")}, wantField: claudePrimarySessionField},
+		{name: "clear conflicts with yolo", setup: ClaudePrimarySessionSetup{Clear: true, YoloMode: boolPointer(false)}, wantField: claudePrimarySessionField},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {

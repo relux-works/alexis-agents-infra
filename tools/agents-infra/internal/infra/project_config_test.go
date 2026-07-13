@@ -22,6 +22,7 @@ yolo_mode = false
 
 [agents.claude.primary_session]
 model = "claude-project"
+yolo_mode = false
 
 [unrelated]
 preserved = "and ignored by this reader"
@@ -44,6 +45,19 @@ preserved = "and ignored by this reader"
 	if config.ClaudePrimarySession.Model == nil || *config.ClaudePrimarySession.Model != "claude-project" {
 		t.Fatalf("Claude model = %#v", config.ClaudePrimarySession.Model)
 	}
+	if config.ClaudePrimarySession.YoloMode == nil || *config.ClaudePrimarySession.YoloMode {
+		t.Fatalf("Claude yolo_mode = %#v, want present false", config.ClaudePrimarySession.YoloMode)
+	}
+}
+
+func TestParseProjectConfigReadsClaudeYoloTrue(t *testing.T) {
+	config, err := parseProjectConfig([]byte("[agents.claude.primary_session]\nyolo_mode = true\n"), "/project/.agents/.configs/project-config.toml")
+	if err != nil {
+		t.Fatalf("parseProjectConfig: %v", err)
+	}
+	if config.ClaudePrimarySession.YoloMode == nil || !*config.ClaudePrimarySession.YoloMode {
+		t.Fatalf("Claude yolo_mode = %#v, want present true", config.ClaudePrimarySession.YoloMode)
+	}
 }
 
 func TestParseProjectConfigRejectsInvalidClaudePrimarySession(t *testing.T) {
@@ -63,9 +77,14 @@ func TestParseProjectConfigRejectsInvalidClaudePrimarySession(t *testing.T) {
 			wantField: claudePrimaryModelField,
 		},
 		{
+			name:      "wrong yolo type",
+			body:      "[agents.claude.primary_session]\nyolo_mode = \"true\"",
+			wantField: claudePrimaryYoloModeField,
+		},
+		{
 			name:      "unsupported field",
-			body:      "[agents.claude.primary_session]\nmodel = \"claude-opus-4-6\"\nyolo_mode = true",
-			wantField: claudePrimarySessionField + ".yolo_mode",
+			body:      "[agents.claude.primary_session]\nmodel = \"claude-opus-4-6\"\nreasoning_effort = \"high\"",
+			wantField: claudePrimarySessionField + ".reasoning_effort",
 		},
 	}
 

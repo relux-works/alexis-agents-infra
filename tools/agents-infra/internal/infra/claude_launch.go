@@ -41,11 +41,12 @@ const (
 	ClaudePrimarySessionSuppressedByCLI ClaudePrimarySessionApplication = "suppressed_by_explicit_cli"
 )
 
-// ClaudePrimarySessionResolution records the invocation-level Claude model
-// decision. ProjectValue and ProjectSource preserve the composed project
-// policy even when an explicit Claude CLI model suppresses its application.
+// ClaudePrimarySessionResolution records the invocation-level Claude
+// primary-session decision. ProjectValue and ProjectSource preserve the
+// composed project policy even when explicit CLI input suppresses it.
 type ClaudePrimarySessionResolution struct {
-	Model ClaudePrimarySessionStringResolution
+	Model    ClaudePrimarySessionStringResolution
+	YoloMode ClaudePrimarySessionBoolResolution
 }
 
 type ClaudePrimarySessionStringResolution struct {
@@ -56,6 +57,15 @@ type ClaudePrimarySessionStringResolution struct {
 	ProjectValue        string
 	ProjectSource       string
 	ProjectApplication  ClaudePrimarySessionApplication
+}
+
+type ClaudePrimarySessionBoolResolution struct {
+	EffectiveValue     bool
+	EffectiveSource    string
+	ProjectConfigured  bool
+	ProjectValue       bool
+	ProjectSource      string
+	ProjectApplication ClaudePrimarySessionApplication
 }
 
 type ClaudeMCPLaunchServer struct {
@@ -299,6 +309,18 @@ func renderClaudePrimarySessionResolution(out *strings.Builder, resolution Claud
 		fmt.Fprintln(out, "    project_source: (none)")
 	}
 	fmt.Fprintf(out, "    project_application: %s\n", resolution.Model.ProjectApplication)
+
+	fmt.Fprintln(out, "  yolo_mode:")
+	fmt.Fprintf(out, "    effective_value: %t\n", resolution.YoloMode.EffectiveValue)
+	fmt.Fprintf(out, "    effective_source: %s\n", resolution.YoloMode.EffectiveSource)
+	if resolution.YoloMode.ProjectConfigured {
+		fmt.Fprintf(out, "    project_value: %t\n", resolution.YoloMode.ProjectValue)
+		fmt.Fprintf(out, "    project_source: %s\n", resolution.YoloMode.ProjectSource)
+	} else {
+		fmt.Fprintln(out, "    project_value: (absent)")
+		fmt.Fprintln(out, "    project_source: (none)")
+	}
+	fmt.Fprintf(out, "    project_application: %s\n", resolution.YoloMode.ProjectApplication)
 }
 
 type parsedClaudeWrapperArgs struct {
@@ -307,6 +329,8 @@ type parsedClaudeWrapperArgs struct {
 	explicitModel       bool
 	explicitModelValue  string
 	explicitModelSource string
+	dangerRequested     bool
+	dangerSource        string
 	expandedShortcuts   []CodexWrapperShortcut
 }
 
@@ -315,6 +339,13 @@ func parseClaudeWrapperArgs(args []string) (parsedClaudeWrapperArgs, error) {
 	passThrough := false
 	for index := 0; index < len(args); index++ {
 		arg := args[index]
+		if arg == claudeDangerouslySkipPermissions {
+			parsed.dangerRequested = true
+			if parsed.dangerSource == "" {
+				parsed.dangerSource = "cli:" + claudeDangerouslySkipPermissions
+			}
+			continue
+		}
 		if passThrough {
 			parsed.claudeArgs = append(parsed.claudeArgs, arg)
 			continue
@@ -325,7 +356,10 @@ func parseClaudeWrapperArgs(args []string) (parsedClaudeWrapperArgs, error) {
 		case arg == "--print-config":
 			parsed.printConfig = true
 		case arg == "-d" || arg == "--danger" || arg == "--yolo":
-			parsed.claudeArgs = append(parsed.claudeArgs, claudeDangerouslySkipPermissions)
+			parsed.dangerRequested = true
+			if parsed.dangerSource == "" {
+				parsed.dangerSource = "wrapper:" + arg
+			}
 			parsed.expandedShortcuts = append(parsed.expandedShortcuts, CodexWrapperShortcut{
 				From: arg,
 				To:   claudeDangerouslySkipPermissions,
@@ -360,7 +394,9 @@ func resolveClaudePrimarySession(policy ClaudePrimarySessionPolicy, parsed parse
 			ProjectSource:      policy.Model.Source,
 			ProjectApplication: ClaudePrimarySessionNotConfigured,
 		},
+		YoloMode: resolveClaudePrimarySessionYolo(policy.YoloMode, parsed),
 	}
+	var args []string
 	if parsed.explicitModel {
 		resolution.Model.EffectiveSource = parsed.explicitModelSource
 		if resolution.Model.EffectiveSource == "" {
@@ -373,14 +409,42 @@ func resolveClaudePrimarySession(policy ClaudePrimarySessionPolicy, parsed parse
 		if policy.Model.Present {
 			resolution.Model.ProjectApplication = ClaudePrimarySessionSuppressedByCLI
 		}
-		return resolution, nil
+	} else if policy.Model.Present {
+		resolution.Model.EffectiveValue = policy.Model.Value
+		resolution.Model.EffectiveValueKnown = true
+		resolution.Model.EffectiveSource = policy.Model.Source
+		resolution.Model.ProjectApplication = ClaudePrimarySessionApplied
+		args = append(args, "--model", policy.Model.Value)
 	}
-	if !policy.Model.Present {
-		return resolution, nil
+	if resolution.YoloMode.EffectiveValue {
+		args = append(args, claudeDangerouslySkipPermissions)
 	}
-	resolution.Model.EffectiveValue = policy.Model.Value
-	resolution.Model.EffectiveValueKnown = true
-	resolution.Model.EffectiveSource = policy.Model.Source
-	resolution.Model.ProjectApplication = ClaudePrimarySessionApplied
-	return resolution, []string{"--model", policy.Model.Value}
+	return resolution, args
+}
+
+func resolveClaudePrimarySessionYolo(project ClaudePrimarySessionBoolValue, parsed parsedClaudeWrapperArgs) ClaudePrimarySessionBoolResolution {
+	resolution := ClaudePrimarySessionBoolResolution{
+		EffectiveSource:    "default",
+		ProjectConfigured:  project.Present,
+		ProjectValue:       project.Value,
+		ProjectSource:      project.Source,
+		ProjectApplication: ClaudePrimarySessionNotConfigured,
+	}
+	if parsed.dangerRequested {
+		resolution.EffectiveValue = true
+		resolution.EffectiveSource = parsed.dangerSource
+		if resolution.EffectiveSource == "" {
+			resolution.EffectiveSource = "explicit_cli"
+		}
+		if project.Present {
+			resolution.ProjectApplication = ClaudePrimarySessionSuppressedByCLI
+		}
+		return resolution
+	}
+	if project.Present {
+		resolution.EffectiveValue = project.Value
+		resolution.EffectiveSource = project.Source
+		resolution.ProjectApplication = ClaudePrimarySessionApplied
+	}
+	return resolution
 }

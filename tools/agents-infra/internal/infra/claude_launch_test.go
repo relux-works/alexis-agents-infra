@@ -105,6 +105,7 @@ yolo_mode = true
 
 [agents.claude.primary_session]
 model = "claude-parent"
+yolo_mode = true
 `)
 	mustMkdir(t, filepath.Join(child, ".agents", ".configs"))
 	childConfig := filepath.Join(child, ".agents", ".configs", "project-config.toml")
@@ -115,6 +116,7 @@ yolo_mode = false
 
 [agents.claude.primary_session]
 model = "claude-child"
+yolo_mode = false
 `)
 
 	plan, err := BuildClaudeLaunchPlan(child, home, nil)
@@ -126,6 +128,12 @@ model = "claude-child"
 	}
 	if plan.PrimarySession.Model.Source != childConfig || plan.PrimarySessionResolution.Model.EffectiveSource != childConfig {
 		t.Fatalf("Claude provenance = %#v / %#v, want child config %s", plan.PrimarySession, plan.PrimarySessionResolution, childConfig)
+	}
+	if got := plan.PrimarySession.YoloMode; !got.Present || got.Value || got.Source != childConfig {
+		t.Fatalf("Claude yolo policy = %#v, want child false with provenance", got)
+	}
+	if got := plan.PrimarySessionResolution.YoloMode; got.EffectiveValue || got.EffectiveSource != childConfig || !got.ProjectConfigured || got.ProjectValue || got.ProjectApplication != ClaudePrimarySessionApplied {
+		t.Fatalf("Claude yolo resolution = %#v, want applied child false", got)
 	}
 	for _, arg := range plan.Args {
 		if arg == codexDangerouslyBypassApprovalsAndSandbox || arg == "codex-child" || arg == "xhigh" {
@@ -148,10 +156,131 @@ model = "claude-child"
 	for _, want := range []string{
 		"effective_value: \"claude-cli\"\n    effective_source: cli:--model",
 		"project_value: \"claude-child\"\n    project_source: " + childConfig + "\n    project_application: suppressed_by_explicit_cli",
+		"  yolo_mode:\n    effective_value: false\n    effective_source: " + childConfig,
 	} {
 		if !strings.Contains(rendered, want) {
 			t.Fatalf("rendered plan missing %q:\n%s", want, rendered)
 		}
+	}
+}
+
+func TestBuildClaudeLaunchPlanYoloExplicitPrecedenceAndSingleFlag(t *testing.T) {
+	tests := []struct {
+		name            string
+		primaryConfig   string
+		args            []string
+		wantArgs        []string
+		wantSource      string
+		wantApplication ClaudePrimarySessionApplication
+		wantShortcuts   int
+	}{
+		{
+			name:            "project policy",
+			primaryConfig:   "yolo_mode = true\n",
+			args:            []string{"exec", "inspect"},
+			wantArgs:        []string{claudeDangerouslySkipPermissions, "exec", "inspect"},
+			wantApplication: ClaudePrimarySessionApplied,
+		},
+		{
+			name:            "duplicate explicit requests suppress project policy",
+			primaryConfig:   "yolo_mode = false\n",
+			args:            []string{"-d", "--yolo", claudeDangerouslySkipPermissions, "exec", "inspect"},
+			wantArgs:        []string{claudeDangerouslySkipPermissions, "exec", "inspect"},
+			wantSource:      "wrapper:-d",
+			wantApplication: ClaudePrimarySessionSuppressedByCLI,
+			wantShortcuts:   2,
+		},
+		{
+			name:            "literal native flag suppresses project policy",
+			primaryConfig:   "yolo_mode = false\n",
+			args:            []string{claudeDangerouslySkipPermissions, "inspect"},
+			wantArgs:        []string{claudeDangerouslySkipPermissions, "inspect"},
+			wantSource:      "cli:" + claudeDangerouslySkipPermissions,
+			wantApplication: ClaudePrimarySessionSuppressedByCLI,
+		},
+		{
+			name:            "false emits no flag",
+			primaryConfig:   "yolo_mode = false\n",
+			args:            []string{"inspect"},
+			wantArgs:        []string{"inspect"},
+			wantApplication: ClaudePrimarySessionApplied,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			home := t.TempDir()
+			start := t.TempDir()
+			mustMkdir(t, filepath.Join(start, ".agents", ".configs"))
+			configPath := filepath.Join(start, ".agents", ".configs", projectConfigFileName)
+			mustWrite(t, configPath, "[agents.claude.primary_session]\n"+tt.primaryConfig)
+
+			plan, err := BuildClaudeLaunchPlan(start, home, tt.args)
+			if err != nil {
+				t.Fatalf("BuildClaudeLaunchPlan: %v", err)
+			}
+			if !reflect.DeepEqual(plan.Args, tt.wantArgs) {
+				t.Fatalf("Args = %#v, want %#v", plan.Args, tt.wantArgs)
+			}
+			if got := countArg(plan.Args, claudeDangerouslySkipPermissions); got > 1 {
+				t.Fatalf("dangerous flag count = %d in %#v, want at most one", got, plan.Args)
+			}
+			if len(plan.WrapperExpandedShortcuts) != tt.wantShortcuts {
+				t.Fatalf("WrapperExpandedShortcuts = %#v, want %d", plan.WrapperExpandedShortcuts, tt.wantShortcuts)
+			}
+			resolution := plan.PrimarySessionResolution.YoloMode
+			if resolution.ProjectSource != configPath || resolution.ProjectApplication != tt.wantApplication {
+				t.Fatalf("yolo resolution = %#v", resolution)
+			}
+			if tt.wantSource != "" && resolution.EffectiveSource != tt.wantSource {
+				t.Fatalf("effective source = %q, want %q", resolution.EffectiveSource, tt.wantSource)
+			}
+		})
+	}
+}
+
+func TestBuildClaudeLaunchPlanRendersYoloDefaultAndCLIResolution(t *testing.T) {
+	defaultPlan, err := BuildClaudeLaunchPlan(t.TempDir(), t.TempDir(), []string{"--print-config", "exec", "inspect"})
+	if err != nil {
+		t.Fatalf("BuildClaudeLaunchPlan default: %v", err)
+	}
+	if got := defaultPlan.PrimarySessionResolution.YoloMode; got.EffectiveValue || got.EffectiveSource != "default" || got.ProjectConfigured || got.ProjectApplication != ClaudePrimarySessionNotConfigured {
+		t.Fatalf("default yolo resolution = %#v", got)
+	}
+	if !strings.Contains(RenderClaudeLaunchPlan(defaultPlan), "  yolo_mode:\n    effective_value: false\n    effective_source: default\n    project_value: (absent)\n    project_source: (none)\n    project_application: not_configured") {
+		t.Fatalf("default yolo block missing:\n%s", RenderClaudeLaunchPlan(defaultPlan))
+	}
+
+	home := t.TempDir()
+	start := t.TempDir()
+	mustMkdir(t, filepath.Join(start, ".agents", ".configs"))
+	configPath := filepath.Join(start, ".agents", ".configs", projectConfigFileName)
+	mustWrite(t, configPath, "[agents.claude.primary_session]\nyolo_mode = false\n")
+	plan, err := BuildClaudeLaunchPlan(start, home, []string{"--print-config", "--danger", "inspect"})
+	if err != nil {
+		t.Fatalf("BuildClaudeLaunchPlan explicit: %v", err)
+	}
+	rendered := RenderClaudeLaunchPlan(plan)
+	for _, want := range []string{
+		"  yolo_mode:\n    effective_value: true\n    effective_source: wrapper:--danger",
+		"    project_value: false\n    project_source: " + configPath + "\n    project_application: suppressed_by_explicit_cli",
+		"wrapper_expansions:\n  - --danger => " + claudeDangerouslySkipPermissions,
+	} {
+		if !strings.Contains(rendered, want) {
+			t.Fatalf("rendered plan missing %q:\n%s", want, rendered)
+		}
+	}
+}
+
+func TestBuildClaudeLaunchPlanRejectsMalformedYoloConfigBeforeLaunch(t *testing.T) {
+	home := t.TempDir()
+	start := t.TempDir()
+	mustMkdir(t, filepath.Join(start, ".agents", ".configs"))
+	configPath := filepath.Join(start, ".agents", ".configs", projectConfigFileName)
+	mustWrite(t, configPath, "[agents.claude.primary_session]\nyolo_mode = \"true\"\n")
+	_, err := BuildClaudeLaunchPlan(start, home, []string{"inspect"})
+	if err == nil || !strings.Contains(err.Error(), configPath) || !strings.Contains(err.Error(), claudePrimaryYoloModeField) {
+		t.Fatalf("BuildClaudeLaunchPlan error = %v, want source path and yolo field", err)
 	}
 }
 
@@ -243,6 +372,9 @@ func TestBuildClaudeLaunchPlanPrintConfigStopsWrapperParsingAfterSeparator(t *te
 	}
 	if len(plan.WrapperExpandedShortcuts) != 0 {
 		t.Fatalf("WrapperExpandedShortcuts = %#v, want none", plan.WrapperExpandedShortcuts)
+	}
+	if got := plan.PrimarySessionResolution.YoloMode; got.EffectiveValue || got.EffectiveSource != "default" || got.ProjectApplication != ClaudePrimarySessionNotConfigured {
+		t.Fatalf("yolo resolution = %#v, want -- separator to preserve the safe default", got)
 	}
 }
 

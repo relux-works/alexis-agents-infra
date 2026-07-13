@@ -141,6 +141,7 @@ yolo_mode = true
 
 [agents.claude.primary_session]
 model = "claude-parent"
+yolo_mode = true
 `)
 	mustMkdir(t, filepath.Join(child, ".agents", ".configs"))
 	childConfig := filepath.Join(child, ".agents", ".configs", "project-config.toml")
@@ -151,6 +152,7 @@ yolo_mode = false
 
 [agents.claude.primary_session]
 model = "claude-child"
+yolo_mode = false
 `)
 	t.Setenv("HOME", home)
 	t.Setenv(callerCWDEnv, child)
@@ -165,6 +167,8 @@ model = "claude-child"
 		"  - " + childConfig,
 		"effective_value: \"claude-cli\"\n    effective_source: cli:--model",
 		"project_value: \"claude-child\"\n    project_source: " + childConfig + "\n    project_application: suppressed_by_explicit_cli",
+		"  yolo_mode:\n    effective_value: false\n    effective_source: " + childConfig,
+		"    project_value: false\n    project_source: " + childConfig + "\n    project_application: applied",
 		"claude_args:\n  - \"--model\"\n  - \"claude-cli\"\n  - \"-p\"\n  - \"inspect\"",
 	} {
 		if !strings.Contains(output, want) {
@@ -195,6 +199,7 @@ yolo_mode = true
 
 [agents.claude.primary_session]
 model = "claude-parent"
+yolo_mode = true
 `)
 	mustMkdir(t, filepath.Join(child, ".agents", ".configs"))
 	childConfig := filepath.Join(child, ".agents", ".configs", "project-config.toml")
@@ -208,6 +213,7 @@ yolo_mode = false
 
 [agents.claude.primary_session]
 model = "claude-child"
+yolo_mode = false
 `)
 	mustMkdir(t, filepath.Join(child, ".codex"))
 	mustWrite(t, filepath.Join(child, ".codex", "config.toml"), "model = \"legacy-local\"\n")
@@ -232,6 +238,8 @@ model = "claude-child"
 		"claude_primary_config_valid":           "true",
 		"claude_primary_model":                  "claude-child",
 		"claude_primary_model_source":           childConfig,
+		"claude_primary_yolo_mode":              "false",
+		"claude_primary_yolo_mode_source":       childConfig,
 	}
 	for key, wantValue := range want {
 		if got := fields[key]; got != wantValue {
@@ -262,6 +270,8 @@ func TestRunDoctorLocalReportsAbsentPrimarySessionDefaults(t *testing.T) {
 		"claude_primary_config_valid":           "true",
 		"claude_primary_model":                  "",
 		"claude_primary_model_source":           "native",
+		"claude_primary_yolo_mode":              "false",
+		"claude_primary_yolo_mode_source":       "default",
 	}
 	for key, wantValue := range want {
 		if got := fields[key]; got != wantValue {

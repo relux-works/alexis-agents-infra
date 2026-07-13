@@ -91,6 +91,19 @@ func runSetup(args []string) error {
 		claudePrimarySessionSetup.Model = &value
 		return nil
 	})
+	fs.Func("claude-yolo-mode", "persistent Claude yolo mode for this project: true or false", func(value string) error {
+		var parsed bool
+		switch value {
+		case "true":
+			parsed = true
+		case "false":
+			parsed = false
+		default:
+			return fmt.Errorf("expected true or false")
+		}
+		claudePrimarySessionSetup.YoloMode = &parsed
+		return nil
+	})
 	clearClaudePrimarySession := fs.Bool("clear-claude-primary-session", false, "remove this project's primary Claude session table")
 
 	parseArgs := args[1:]
@@ -207,6 +220,8 @@ func runDoctor(args []string) error {
 		if report.ClaudePrimaryConfigValid {
 			fmt.Fprintf(os.Stdout, "claude_primary_model: %s\n", report.ClaudePrimarySession.Model.Value)
 			fmt.Fprintf(os.Stdout, "claude_primary_model_source: %s\n", claudePrimaryStringSource(report.ClaudePrimarySession.Model))
+			fmt.Fprintf(os.Stdout, "claude_primary_yolo_mode: %t\n", report.ClaudePrimarySession.YoloMode.Value)
+			fmt.Fprintf(os.Stdout, "claude_primary_yolo_mode_source: %s\n", claudePrimaryBoolSource(report.ClaudePrimarySession.YoloMode))
 		}
 		if report.CodexConfigShadowsGlobal {
 			if report.CodexConfigGenerated {
@@ -242,6 +257,13 @@ func claudePrimaryStringSource(value infra.ClaudePrimarySessionStringValue) stri
 		return value.Source
 	}
 	return "native"
+}
+
+func claudePrimaryBoolSource(value infra.ClaudePrimarySessionBoolValue) string {
+	if value.Present {
+		return value.Source
+	}
+	return "default"
 }
 
 func runCodex(args []string) error {
@@ -337,7 +359,7 @@ func usageText() string {
 	return `Usage:
   agents-infra version
   agents-infra setup global [--source-dir DIR] [--home-dir DIR] [--no-sync]
-  agents-infra setup local [PROJECT_DIR] [--source-dir DIR] [--project-dir DIR] [--no-sync] [--codex-config preserve|global|local] [--codex-primary-model MODEL] [--codex-primary-reasoning-effort EFFORT] [--codex-yolo-mode=true|false] [--clear-codex-primary-session] [--claude-primary-model MODEL] [--clear-claude-primary-session]
+  agents-infra setup local [PROJECT_DIR] [--source-dir DIR] [--project-dir DIR] [--no-sync] [--codex-config preserve|global|local] [--codex-primary-model MODEL] [--codex-primary-reasoning-effort EFFORT] [--codex-yolo-mode=true|false] [--clear-codex-primary-session] [--claude-primary-model MODEL] [--claude-yolo-mode=true|false] [--clear-claude-primary-session]
   agents-infra refresh-links --agents-dir DIR --claude-dir DIR --codex-dir DIR --bin-dir DIR [--mode global|local] [--codex-config preserve|global|local]
   agents-infra doctor global [--home-dir DIR]
   agents-infra doctor local [PROJECT_DIR] [--project-dir DIR]
