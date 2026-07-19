@@ -2,12 +2,102 @@ package main
 
 import (
 	"bytes"
+	"encoding/json"
 	"io"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"testing"
+
+	"github.com/relux-works/relux-agents-infra/tools/agents-infra/internal/infra"
 )
+
+func TestRunComposeEmitsOneV1DocumentWithoutProviderExecutable(t *testing.T) {
+	home := t.TempDir()
+	project := t.TempDir()
+	configDir := filepath.Join(project, ".agents", ".configs")
+	mustMkdir(t, configDir)
+	mustWrite(t, filepath.Join(configDir, "project-config.toml"), "[mcp]\nenabled_servers = [\"figma\"]\n")
+	mustWrite(t, filepath.Join(configDir, "codex-mcp-servers.toml"), "[servers.figma]\nurl = \"https://mcp.figma.com/mcp\"\n")
+	t.Setenv("HOME", home)
+	t.Setenv("PATH", t.TempDir())
+
+	for _, agent := range []string{"codex", "claude"} {
+		t.Run(agent, func(t *testing.T) {
+			output := captureStdout(t, func() {
+				if err := run([]string{"compose", "--agent", agent, "--project", project, "--schema-version", "1", "--json"}); err != nil {
+					t.Fatalf("run compose: %v", err)
+				}
+			})
+			var composition infra.ChildLaunchComposition
+			decodeSingleJSONDocument(t, output, &composition)
+			if composition.Contract != infra.ChildLaunchCompositionContract || composition.SchemaVersion != 1 || composition.Status != "ok" || composition.Agent != agent {
+				t.Fatalf("composition envelope = %#v", composition)
+			}
+			if composition.Producer.Version == "" || composition.Producer.Commit == "" {
+				t.Fatalf("composition producer metadata = %#v", composition.Producer)
+			}
+			if agent == "codex" && !reflect.DeepEqual(composition.ArgvPrefix, []string{"-c", "mcp_servers.figma.url=\"https://mcp.figma.com/mcp\""}) {
+				t.Fatalf("Codex ArgvPrefix = %#v", composition.ArgvPrefix)
+			}
+			if agent == "claude" && (len(composition.ArgvPrefix) != 2 || composition.ArgvPrefix[0] != "--mcp-config") {
+				t.Fatalf("Claude ArgvPrefix = %#v", composition.ArgvPrefix)
+			}
+		})
+	}
+}
+
+func TestRunComposeUnsupportedSchemaVersionEmitsSafeV1ErrorEnvelope(t *testing.T) {
+	project := t.TempDir()
+	var composeErr error
+	output := captureStdout(t, func() {
+		composeErr = runCompose([]string{"--agent", "claude", "--project", project, "--schema-version", "2", "--json"})
+	})
+	if composeErr == nil {
+		t.Fatal("runCompose succeeded for unsupported schema version")
+	}
+	var envelope infra.ChildLaunchCompositionErrorEnvelope
+	decodeSingleJSONDocument(t, output, &envelope)
+	if envelope.Contract != infra.ChildLaunchCompositionContract || envelope.SchemaVersion != 1 || envelope.Status != "error" || envelope.Agent != "claude" || envelope.Error.Code != "unsupported_schema_version" {
+		t.Fatalf("error envelope = %#v", envelope)
+	}
+}
+
+func TestRunComposeInvalidConfigEmitsSafeErrorEnvelope(t *testing.T) {
+	home := t.TempDir()
+	project := t.TempDir()
+	configDir := filepath.Join(project, ".agents", ".configs")
+	mustMkdir(t, configDir)
+	mustWrite(t, filepath.Join(configDir, "project-config.toml"), "[mcp\nenabled_servers = [\"figma\"]\n")
+	t.Setenv("HOME", home)
+
+	var composeErr error
+	output := captureStdout(t, func() {
+		composeErr = runCompose([]string{"--agent", "codex", "--project", project, "--schema-version", "1", "--json"})
+	})
+	if composeErr == nil {
+		t.Fatal("runCompose succeeded with invalid config")
+	}
+	var envelope infra.ChildLaunchCompositionErrorEnvelope
+	decodeSingleJSONDocument(t, output, &envelope)
+	if envelope.Error.Code != "invalid_project_configuration" {
+		t.Fatalf("error envelope = %#v", envelope)
+	}
+	if strings.Contains(output, "parse TOML") || strings.Contains(output, "enabled_servers") {
+		t.Fatalf("machine error envelope leaked human diagnostics: %s", output)
+	}
+}
+
+func TestAgentsInfraModuleHasNoTaskBoardDependency(t *testing.T) {
+	data, err := os.ReadFile("go.mod")
+	if err != nil {
+		t.Fatalf("read go.mod: %v", err)
+	}
+	if strings.Contains(string(data), "task-board") || strings.Contains(string(data), "skill-project-management") {
+		t.Fatalf("go.mod contains a task-board dependency:\n%s", data)
+	}
+}
 
 func TestRunCodexPrintConfigUsesCallerCWDEnv(t *testing.T) {
 	home := t.TempDir()
@@ -389,6 +479,18 @@ func captureStdout(t *testing.T, fn func()) string {
 		t.Fatalf("Close stdout pipe reader: %v", err)
 	}
 	return buf.String()
+}
+
+func decodeSingleJSONDocument(t *testing.T, output string, destination any) {
+	t.Helper()
+	decoder := json.NewDecoder(strings.NewReader(output))
+	if err := decoder.Decode(destination); err != nil {
+		t.Fatalf("decode JSON document: %v\n%s", err, output)
+	}
+	var extra any
+	if err := decoder.Decode(&extra); err != io.EOF {
+		t.Fatalf("stdout contained more than one JSON document: err=%v extra=%#v\n%s", err, extra, output)
+	}
 }
 
 func parseKeyValueOutput(output string) map[string]string {

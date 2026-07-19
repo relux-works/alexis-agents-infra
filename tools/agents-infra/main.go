@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"errors"
 	"flag"
 	"fmt"
@@ -38,6 +39,8 @@ func run(args []string) error {
 		return runRefreshLinks(args[1:])
 	case "doctor":
 		return runDoctor(args[1:])
+	case "compose":
+		return runCompose(args[1:])
 	case "codex":
 		return runCodex(args[1:])
 	case "claude":
@@ -310,6 +313,52 @@ func runClaude(args []string) error {
 	return cmd.Run()
 }
 
+func runCompose(args []string) error {
+	fs := flag.NewFlagSet("compose", flag.ContinueOnError)
+	fs.SetOutput(os.Stderr)
+	agent := fs.String("agent", "", "child agent provider: codex or claude")
+	projectDir := fs.String("project", "", "project directory used for MCP composition")
+	schemaVersion := fs.Int("schema-version", 0, "child launch composition schema version")
+	jsonOutput := fs.Bool("json", false, "emit one JSON contract document")
+	if err := fs.Parse(args); err != nil {
+		return err
+	}
+	if len(fs.Args()) != 0 {
+		return fmt.Errorf("compose does not accept positional arguments: %q", fs.Args())
+	}
+	if *agent != "codex" && *agent != "claude" {
+		return fmt.Errorf("compose requires --agent codex or --agent claude")
+	}
+	if !*jsonOutput {
+		return fmt.Errorf("compose requires --json")
+	}
+	canonicalProjectDir, err := infra.CanonicalProjectDir(*projectDir)
+	if err != nil {
+		return err
+	}
+	producer := infra.ChildLaunchCompositionProducer{Version: Version, Commit: Commit}
+	if *schemaVersion != infra.ChildLaunchCompositionSchemaVersion {
+		envelope := infra.NewChildLaunchCompositionErrorEnvelope(*agent, canonicalProjectDir, producer, "unsupported_schema_version")
+		if err := json.NewEncoder(os.Stdout).Encode(envelope); err != nil {
+			return fmt.Errorf("encode compose error envelope: %w", err)
+		}
+		return fmt.Errorf("unsupported child launch composition schema version %d", *schemaVersion)
+	}
+
+	composition, err := infra.BuildChildLaunchComposition(*agent, canonicalProjectDir, "", producer)
+	if err != nil {
+		envelope := infra.NewChildLaunchCompositionErrorEnvelope(*agent, canonicalProjectDir, producer, "invalid_project_configuration")
+		if encodeErr := json.NewEncoder(os.Stdout).Encode(envelope); encodeErr != nil {
+			return fmt.Errorf("encode compose error envelope: %w", encodeErr)
+		}
+		return fmt.Errorf("compose project MCP configuration: %w", err)
+	}
+	if err := json.NewEncoder(os.Stdout).Encode(composition); err != nil {
+		return fmt.Errorf("encode child launch composition: %w", err)
+	}
+	return nil
+}
+
 func runVersion() error {
 	fmt.Fprintf(os.Stdout, "agents-infra %s commit=%s build_date=%s\n", Version, Commit, BuildDate)
 	return nil
@@ -363,6 +412,7 @@ func usageText() string {
   agents-infra refresh-links --agents-dir DIR --claude-dir DIR --codex-dir DIR --bin-dir DIR [--mode global|local] [--codex-config preserve|global|local]
   agents-infra doctor global [--home-dir DIR]
   agents-infra doctor local [PROJECT_DIR] [--project-dir DIR]
+  agents-infra compose --agent codex|claude --project DIR --schema-version 1 --json
   agents-infra codex [--print-config] [-d|--danger|--yolo] [--] [CODEX_ARGS...]
   agents-infra claude [--print-config] [-d|--danger|--yolo] [--] [CLAUDE_ARGS...]`
 }

@@ -24,6 +24,7 @@ agents-infra setup global
 agents-infra setup local /path/to/project
 agents-infra doctor global
 agents-infra doctor local /path/to/project
+agents-infra compose --agent codex --project /path/to/project --schema-version 1 --json
 agents-infra version
 ```
 
@@ -41,6 +42,7 @@ The canonical interface after bootstrap is:
 - `agents-infra setup global`
 - `agents-infra setup local [PATH]`
 - `agents-infra doctor global|local`
+- `agents-infra compose --agent codex|claude --project DIR --schema-version 1 --json`
 - `agents-infra codex [--print-config] [-d] [CODEX_ARGS...]`
 - `agents-infra claude [--print-config] [-d] [CLAUDE_ARGS...]`
 - `agents-infra version`
@@ -79,6 +81,37 @@ Use `--codex-config` when local setup should make an explicit decision:
 - `--codex-config=local` links `.codex/config.toml` to the installed project
   runtime at `.agents/.configs/codex-config.toml`, making model/reasoning
   settings project-local by explicit choice.
+
+### Child launch MCP composition contract
+
+Automation that owns child process policy can request the project MCP subset
+without launching Codex or Claude:
+
+```bash
+agents-infra compose --agent codex --project /abs/path/to/project --schema-version 1 --json
+agents-infra compose --agent claude --project /abs/path/to/project --schema-version 1 --json
+```
+
+The command writes exactly one
+`agents-infra.child-launch-composition` JSON document to stdout. Schema version
+`1` contains the canonical project directory, build version/commit, an MCP-only
+`argv_prefix`, ordered safe server provenance, and referenced environment
+variable names. Codex receives only `-c mcp_servers.*` pairs. Claude receives
+either an empty prefix or exactly one `--mcp-config` pair.
+
+This is deliberately not a primary-session launch plan. The composition never
+includes project model/reasoning/yolo policy, approval or permission flags,
+provider user arguments, prompts, profiles, service tiers, or base Codex config
+paths. It also never resolves a `bearer_token_env_var`: Codex receives the env
+variable name and Claude receives the literal `Bearer ${ENV_NAME}` reference,
+so no environment value is read or serialized.
+
+Recognized composition failures return nonzero and emit a safe version-1 error
+envelope with a stable `error.code`; human diagnostics go only to stderr.
+Unsupported versions use `unsupported_schema_version`, while malformed or
+invalid discovered project configuration uses
+`invalid_project_configuration`. Consumers must reject a contract/version
+mismatch rather than partially applying its arguments.
 
 ### Provider-specific primary session policies
 
@@ -287,7 +320,7 @@ it owns only this primary-session TOML.
 | Tool | Purpose | Command | Outputs |
 |------|---------|---------|---------|
 | `./setup.sh` / `./setup.ps1` | Bootstrap the `agents-infra` CLI and sync the global runtime | `./setup.sh`, `.\setup.ps1` | `~/.local/bin/agents-infra`, `~/.agents/`, `~/.claude/`, `~/.codex/`, install-state metadata |
-| `agents-infra` | Set up or inspect global/project-local agent runtimes; configure and launch isolated primary Codex and Claude sessions; launch either agent with project-local MCP opt-ins | `agents-infra setup global`, `agents-infra setup local /path/to/project --codex-primary-model MODEL --codex-primary-reasoning-effort EFFORT --codex-yolo-mode=true\|false --claude-primary-model MODEL`, `agents-infra setup local /path/to/project --clear-codex-primary-session`, `agents-infra setup local /path/to/project --clear-claude-primary-session`, `agents-infra doctor local /path/to/project`, `agents-infra codex --print-config`, `agents-infra claude --print-config` | Runtime directories under the target root; printed diagnostics on stdout |
+| `agents-infra` | Set up or inspect global/project-local agent runtimes; compose non-launching MCP-only child argv; configure and launch isolated primary Codex and Claude sessions | `agents-infra setup global`, `agents-infra setup local /path/to/project --codex-primary-model MODEL --codex-primary-reasoning-effort EFFORT --codex-yolo-mode=true\|false --claude-primary-model MODEL`, `agents-infra setup local /path/to/project --clear-codex-primary-session`, `agents-infra setup local /path/to/project --clear-claude-primary-session`, `agents-infra doctor local /path/to/project`, `agents-infra compose --agent codex --project /path/to/project --schema-version 1 --json`, `agents-infra codex --print-config`, `agents-infra claude --print-config` | Runtime directories under the target root; deterministic compose JSON or printed diagnostics on stdout |
 | `agents-attachments` | Resolve generic attachment manifests and stage image inputs for inspection | `agents-attachments list`, `agents-attachments path screenshot.png`, `agents-attachments stage-images ./photo.heic --out-dir .temp/image-intake` | `.temp/agents-attachments-manifest.json`, `.temp/agents-attachments/`, staged images and `image-stage-map.json` under caller-selected `.temp/` |
 | `python3` | Run the `agents-attachments` helper and its focused tests | `python3 -m py_compile .scripts/agents-attachments`, `python3 -m unittest tests/test_agents_attachments.py` | Python bytecode cache and task-scoped logs under `.temp/` |
 | `sips` / ImageMagick `magick` | Normalize HEIC/HEIF image inputs for staged inspection | `sips -s format png input.heic --out output.png`, `magick input.heic output.png` | Normalized staged images under caller-selected `.temp/` |
@@ -527,6 +560,19 @@ agents-infra claude
 agents-infra claude -d
 agents-infra claude --print-config
 ```
+
+For a child runner that already owns model, safety, prompt, and lifecycle
+arguments, use the non-launching composition contract instead of either primary
+launcher:
+
+```bash
+agents-infra compose --agent codex --project "$PWD" --schema-version 1 --json
+agents-infra compose --agent claude --project "$PWD" --schema-version 1 --json
+```
+
+Its `argv_prefix` is only the provider rendering of the resolved
+`enabled_servers` set; safe metadata repeats no URL, command, args, or headers.
+Bearer token values are never read or emitted.
 
 `-d` expands to Codex `--dangerously-bypass-approvals-and-sandbox` or Claude
 Code `--dangerously-skip-permissions` respectively. Each launcher can also

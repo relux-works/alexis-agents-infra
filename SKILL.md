@@ -48,6 +48,7 @@ agents-infra setup global
 agents-infra setup local /path/to/project
 agents-infra doctor global
 agents-infra doctor local /path/to/project
+agents-infra compose --agent codex --project /path/to/project --schema-version 1 --json
 agents-infra version
 ```
 
@@ -313,6 +314,22 @@ Expected behavior:
   just because it exists in a registry.
 - `agents-infra doctor local /path/to/project` reports the opt-in list through
   `codex_mcp_enabled`.
+
+Child runners that already own model, safety, prompt, and lifecycle arguments
+must use the non-launching, versioned MCP-only contract:
+
+```bash
+agents-infra compose --agent codex --project /path/to/project --schema-version 1 --json
+agents-infra compose --agent claude --project /path/to/project --schema-version 1 --json
+```
+
+The command emits one
+`agents-infra.child-launch-composition` version-1 JSON document and never
+launches a provider. Codex output contains only `-c mcp_servers.*` pairs;
+Claude output is empty or one `--mcp-config` pair. Safe metadata exposes
+server names, source paths, and referenced bearer-token environment variable
+names, but primary-session policy, provider user args, and environment values
+are excluded.
 
 ## Attachments Contract
 
